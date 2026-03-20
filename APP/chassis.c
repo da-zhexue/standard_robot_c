@@ -6,6 +6,7 @@
 #include "usart.h"
 #include "user_lib.h"
 #include "pid.h"
+#include "dwt/bsp_dwt.h"
 
 const fp32 filter_speed_alpha[3] = {0.2f, 0.2f, 0.2f};
 const pid_config m3508_pid_config = {.mode = PID_POSITION, .kp = 8.0f, .ki = 0.0f, .kd = 0.0f, .max_out = 16000.0f, .max_iout = 3000.0f,
@@ -26,6 +27,7 @@ void Calc_Angle();
 void Calc_M3508Speed();
 void Calc_MF9025Angle();
 void Calc_PIDOut();
+void Send_CommInfo();
 void Send_CanCmd();
 
 void chassis_init()
@@ -36,6 +38,7 @@ void chassis_init()
     static INS_t ins_ins;
     static comm_t comm_ins;
 
+    DWT_Init(168);
     dbus_init(&rc_ins);
     m3508_init(&m3508_ins, &hcan1, M3508_TX_1, 4);
     mf9025_init(&mf9025_ins, &hcan1, MF9025_TX_MIN);
@@ -58,7 +61,7 @@ void chassis_task(const void* argument)
     chassis_init();
     while(1)
     {
-        //Check_GameStart();
+        //if (Check_GameStart()) continue;
         Switch_Controller();
         Calc_MoveSpeed();
         Calc_RotateAngle();
@@ -66,6 +69,7 @@ void chassis_task(const void* argument)
         Calc_M3508Speed();
         Calc_MF9025Angle();
         Calc_PIDOut();
+        Send_CommInfo();
         Send_CanCmd();
         osDelay((uint32_t)(CHASSIS_CONTROL_TIME * 1000));
     }
@@ -214,6 +218,7 @@ void Calc_M3508Speed()
 
 void Calc_MF9025Angle()
 {
+    INS_Update(chassis.ins);
     chassis.ctrl.m9025_controller.given_angle = chassis.ctrl.given_gimbal_l_yaw;
     chassis.ctrl.m9025_controller.ff_speed = 5729.5779513f * chassis.ins->imu.Gyro[2];
 }
@@ -233,4 +238,9 @@ void Send_CanCmd()
     const int32_t mf9025_speed = (int32_t)(chassis.ctrl.m9025_controller.pid.out[0] + chassis.ctrl.m9025_controller.ff_speed);
     m3508_ctrl(chassis.m3508, m3508_iq);
     mf9025_ctrl_speed(chassis.mf9025, MF9025_MAX_IQ, mf9025_speed);
+}
+
+void Send_CommInfo()
+{
+    comm_send_attitude(chassis.chassis_angle.yaw_deg);
 }

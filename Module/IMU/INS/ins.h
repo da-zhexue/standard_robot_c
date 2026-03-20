@@ -50,8 +50,8 @@ typedef struct
 } INS_t;
 
 void INS_Init(INS_t *INS);
-void INS_Update(void);
-void IMU_Temperature_Ctrl(void);
+void INS_Update(INS_t *ins_ins);
+void IMU_Temperature_Ctrl(const INS_t *ins_ins);
 
 void BodyFrameToEarthFrame(const float *vecBF, float *vecEF, const float *q);
 void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, const float *q);

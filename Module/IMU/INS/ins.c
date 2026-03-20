@@ -16,8 +16,6 @@ const float xb[3] = {1, 0, 0};
 const float yb[3] = {0, 1, 0};
 const float zb[3] = {0, 0, 1};
 
-extern volatile uint32_t sys_time_ms;
-
 static INS_t *ins_instance = NULL;
 void INS_Init(INS_t *INS)
 {
@@ -34,10 +32,12 @@ void INS_Init(INS_t *INS)
 #endif
 }
 
-void INS_Update(void)
+void INS_Update(INS_t *ins_ins)
 {
+    if (ins_ins == NULL)
+        return;
     /* === IMU update === */
-    BMI088_Read(&ins_instance->imu);
+    BMI088_Read(&ins_ins->imu);
 #ifdef USE_CBOARD_IMU
     static uint32_t INS_DWT_Count = 0;
     static float dt = 0, t = 0;
@@ -46,55 +46,56 @@ void INS_Update(void)
     dt = DWT_GetDeltaT(&INS_DWT_Count);
     t += dt;
 
-    ins_instance->ins.Accel[X] = ins_instance->imu.Accel[X];
-    ins_instance->ins.Accel[Y] = ins_instance->imu.Accel[Y];
-    ins_instance->ins.Accel[Z] = ins_instance->imu.Accel[Z];
-    ins_instance->ins.Gyro[X]  = ins_instance->imu.Gyro[X];
-    ins_instance->ins.Gyro[Y]  = ins_instance->imu.Gyro[Y];
-    ins_instance->ins.Gyro[Z]  = ins_instance->imu.Gyro[Z];
+    ins_ins->ins.Accel[X] = ins_ins->imu.Accel[X];
+    ins_ins->ins.Accel[Y] = ins_ins->imu.Accel[Y];
+    ins_ins->ins.Accel[Z] = ins_ins->imu.Accel[Z];
+    ins_ins->ins.Gyro[X]  = ins_ins->imu.Gyro[X];
+    ins_ins->ins.Gyro[Y]  = ins_ins->imu.Gyro[Y];
+    ins_ins->ins.Gyro[Z]  = ins_ins->imu.Gyro[Z];
 
     // 核心函数,EKF更新四元数
     IMU_QuaternionEKF_Update(
-        ins_instance->ins.Gyro[X], ins_instance->ins.Gyro[Y], ins_instance->ins.Gyro[Z],
-        ins_instance->ins.Accel[X], ins_instance->ins.Accel[Y], ins_instance->ins.Accel[Z],
+        ins_ins->ins.Gyro[X], ins_ins->ins.Gyro[Y], ins_ins->ins.Gyro[Z],
+        ins_ins->ins.Accel[X], ins_ins->ins.Accel[Y], ins_ins->ins.Accel[Z],
         dt
     );
 
     const QEKF_INS_t *QEKF_INS = Get_QEKF_INS();
-    memcpy(ins_instance->ins.q, QEKF_INS->q, sizeof(QEKF_INS->q));
+    memcpy(ins_ins->ins.q, QEKF_INS->q, sizeof(QEKF_INS->q));
 
     // 机体系基向量转换到导航坐标系，本例选取惯性系为导航系
-    BodyFrameToEarthFrame(xb, ins_instance->ins.xn, ins_instance->ins.q);
-    BodyFrameToEarthFrame(yb, ins_instance->ins.yn, ins_instance->ins.q);
-    BodyFrameToEarthFrame(zb, ins_instance->ins.zn, ins_instance->ins.q);
+    BodyFrameToEarthFrame(xb, ins_ins->ins.xn, ins_ins->ins.q);
+    BodyFrameToEarthFrame(yb, ins_ins->ins.yn, ins_ins->ins.q);
+    BodyFrameToEarthFrame(zb, ins_ins->ins.zn, ins_ins->ins.q);
 
     // 将重力从导航坐标系n转换到机体系b,随后根据加速度计数据计算运动加速度
     float gravity_b[3];
-    EarthFrameToBodyFrame(gravity, gravity_b, ins_instance->ins.q);
+    EarthFrameToBodyFrame(gravity, gravity_b, ins_ins->ins.q);
 
     for (uint8_t i = 0; i < 3; i++)
     {
-        ins_instance->ins.MotionAccel_b[i] =
-            (ins_instance->ins.Accel[i] - gravity_b[i]) * dt / (ins_instance->ins.AccelLPF + dt) +
-            ins_instance->ins.MotionAccel_b[i] * ins_instance->ins.AccelLPF / (ins_instance->ins.AccelLPF + dt);
+        ins_ins->ins.MotionAccel_b[i] =
+            (ins_ins->ins.Accel[i] - gravity_b[i]) * dt / (ins_ins->ins.AccelLPF + dt) +
+            ins_ins->ins.MotionAccel_b[i] * ins_ins->ins.AccelLPF / (ins_ins->ins.AccelLPF + dt);
     }
 
-    BodyFrameToEarthFrame(ins_instance->ins.MotionAccel_b, ins_instance->ins.MotionAccel_n, ins_instance->ins.q);
+    BodyFrameToEarthFrame(ins_ins->ins.MotionAccel_b, ins_ins->ins.MotionAccel_n, ins_ins->ins.q);
 
     // 获取最终数据
-    ins_instance->ins.Yaw            = QEKF_INS->Yaw / 360 * 2 * PI;
-    ins_instance->ins.Pitch          = QEKF_INS->Pitch / 360 * 2 * PI;
-    ins_instance->ins.Roll           = QEKF_INS->Roll / 360 * 2 * PI;
-    ins_instance->ins.YawTotalAngle  = QEKF_INS->YawTotalAngle / 360 * 2 * PI;
-
+    ins_ins->ins.Yaw            = QEKF_INS->Yaw / 360 * 2 * PI;
+    ins_ins->ins.Pitch          = QEKF_INS->Pitch / 360 * 2 * PI;
+    ins_ins->ins.Roll           = QEKF_INS->Roll / 360 * 2 * PI;
+    ins_ins->ins.YawTotalAngle  = QEKF_INS->YawTotalAngle / 360 * 2 * PI;
+#endif
     /* === temperature control (500Hz) === */
+    static uint32_t sys_time_ms = 0;
     static uint32_t last_temp_ctrl_ms = 0;
+    sys_time_ms = (uint32_t)DWT_GetTimeline_ms();
     if (sys_time_ms - last_temp_ctrl_ms >= 2)
     {
         last_temp_ctrl_ms = sys_time_ms;
-        IMU_Temperature_Ctrl();
+        IMU_Temperature_Ctrl(ins_ins);
     }
-#endif
 }
 
 void BodyFrameToEarthFrame(const float *vecBF, float *vecEF, const float *q)
@@ -126,9 +127,9 @@ void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, const float *q)
                        (0.5f - q[1] * q[1] - q[2] * q[2]) * vecEF[2]);
 }
 
-void IMU_Temperature_Ctrl(void)
+void IMU_Temperature_Ctrl(const INS_t *ins_ins)
 {
-    PID_plus_Calculate(&TempCtrl, ins_instance->imu.Temperature, RefTemp);
+    PID_plus_Calculate(&TempCtrl, ins_ins->imu.Temperature, RefTemp);
     fp32 temp_out = TempCtrl.Output;
     float_constrain(&temp_out, 0, (fp32)UINT32_MAX * 1.0f);
     TIM_Set_PWM(&htim10, TIM_CHANNEL_1, (uint16_t)temp_out);
