@@ -14,7 +14,6 @@ const pid_config m3508_pid_config = {.mode = PID_POSITION, .kp = 8.0f, .ki = 0.0
 const pid_config mf9025_angle_pid_config = {.mode = PID_POSITION, .kp = 600.0f, .ki = 0.0f, .kd = 45000.0f, .max_out = 30000.0f, .max_iout = 3000.0f,
     .out_limit_delta_P = 10000.0f, .out_limit_delta_N = 40000.0f, .deadzone = 0.0f};
 const uint16_t mf9025_speed_pid_config[3] = {80, 10, 10};
-
 static chassis_t chassis;
 void Filter_Init();
 void PID_Init();
@@ -24,10 +23,13 @@ void Switch_Controller();
 void Calc_MoveSpeed();
 void Calc_RotateAngle();
 void Calc_Angle();
+void Send_CommInfo();
 void Calc_M3508Speed();
 void Calc_MF9025Angle();
 void Calc_PIDOut();
-void Send_CommInfo();
+void Set_MaxPower();
+void Update_PowerParam();
+void Limit_Power();
 void Send_CanCmd();
 
 void chassis_init()
@@ -37,6 +39,10 @@ void chassis_init()
     static mf9025_instance mf9025_ins;
     static INS_t ins_ins;
     static comm_t comm_ins;
+    static PowerControllerConfig power_ctrl_config;
+    static PowerAllocationResult power_ctrl_result;
+    static PowerControlParam ctx;
+    static super_cap_instance supercap_ins;
 
     DWT_Init(168);
     dbus_init(&rc_ins);
@@ -44,12 +50,20 @@ void chassis_init()
     mf9025_init(&mf9025_ins, &hcan1, MF9025_TX_MIN);
     INS_Init(&ins_ins);
     comm_init(&comm_ins, &huart6);
+    initPowerControllerConfig(&power_ctrl_config, M3508_TORQUE_CONST, M3508_CURRENT_LIMIT, M3508_OUTPUT_LIMIT,
+        K1_CONST,  K2_CONST, K3_CONST, sentinelMaxPower[0]);
+    PowerControl_Init(&ctx);
+    super_cap_init(&supercap_ins, &hcan1);
 
     chassis.rc = &rc_ins;
     chassis.m3508 = &m3508_ins;
     chassis.mf9025 = &mf9025_ins;
     chassis.ins = &ins_ins;
     chassis.comm = &comm_ins;
+    chassis.power_ctrl_config = &power_ctrl_config;
+    chassis.power_ctrl_result = &power_ctrl_result;
+    chassis.ctx = &ctx;
+    chassis.super_cap = &supercap_ins;
 
     memset(&chassis.ctrl, 0, sizeof(chassis.ctrl));
     Filter_Init();
@@ -66,10 +80,13 @@ void chassis_task(const void* argument)
         Calc_MoveSpeed();
         Calc_RotateAngle();
         Calc_Angle();
+        Send_CommInfo();
         Calc_M3508Speed();
         Calc_MF9025Angle();
         Calc_PIDOut();
-        Send_CommInfo();
+        Set_MaxPower();
+        //Update_PowerParam();
+        //Limit_Power();
         Send_CanCmd();
         osDelay((uint32_t)(CHASSIS_CONTROL_TIME * 1000));
     }
@@ -226,15 +243,85 @@ void Calc_MF9025Angle()
 void Calc_PIDOut()
 {
     for (int i = 0; i < 4; i++)
+    {
         PID_calc(&chassis.ctrl.m3508_controller[i].pid, chassis.m3508->ecd->speed, chassis.ctrl.m3508_controller[i].given_speed);
+        chassis.ctrl.m3508_controller[i].out = chassis.ctrl.m3508_controller[i].pid.out[0];
+    }
     PID_calc(&chassis.ctrl.m9025_controller.pid, -chassis.gimbal_angle.yaw_total_angle, chassis.ctrl.m9025_controller.given_angle);
+}
+
+void Set_MaxPower()
+{
+    if (chassis.comm->comm_ctrl_param.nav_state >= NAV_STOP && chassis.comm->comm_ctrl_param.nav_state <= NAV_SPIN)
+        chassis.ctrl.nav_state = chassis.comm->comm_ctrl_param.nav_state;
+    switch (chassis.ctrl.nav_state) // 该策略仅作联盟赛哨兵使用
+    {
+        case NAV_STOP: // 开始未启动前
+            chassis.ctrl.maxpower = sentinelMaxPower[0];
+            break;
+        case NAV_️RUSH: // ♿️冲刺♿️，拉满超电抢占中心点
+            chassis.ctrl.maxpower = sentinelMaxPower[0] + SUPERCAP_MAXPOWER;
+            break;
+        case NAV_SPIN: // 到达中心点后开启小陀螺
+            chassis.ctrl.maxpower = sentinelMaxPower[0];
+            break;
+        default:
+            break;
+    }
+    setMaxPower(chassis.power_ctrl_config, chassis.ctrl.maxpower);
+    //limitMaxPower(chassis.power_ctrl_config, chassis.comm->comm_ctrl_param.);
+}
+
+void Update_PowerParam()
+{
+    const float measuredpower = chassis.super_cap->power_data.total_power;
+
+    float torqueFeedback[4];
+    float rpmFeedback[4];
+
+    for (int i = 0; i < 4; i++) {
+        torqueFeedback[i] = (float)chassis.m3508[i].ecd->current * M3508_CURRENT_LIMIT / M3508_ECD_MAX * 0.3f; // m3508的力矩与电流比例大致等于0.3
+        rpmFeedback[i] = chassis.m3508[i].ecd->speed;
+    }
+
+    float effectivePower = 0.0f;
+    for (int i = 0; i < 4; i++) {
+        const float angularVelocity = rpmFeedback[i] * (3.1415926535f / 30.0f);
+        effectivePower += torqueFeedback[i] * angularVelocity;
+    }
+
+    PowerControl_CollectMotorData(chassis.ctx, torqueFeedback, rpmFeedback, measuredpower, 4);
+    PowerControl_Update(chassis.ctx, effectivePower);
+
+    updatePowerControlConfig(chassis.power_ctrl_config, chassis.ctx->k2, chassis.ctx->k3);
+}
+
+void Limit_Power()
+{
+    static MotorPowerObj motorpower[4];
+
+    for (int i = 0; i < 4; i++)
+    {
+        motorpower[i].curAv = (fp32)chassis.m3508->ecd->speed * ECD_TO_AV;
+        motorpower[i].setAv = (fp32)chassis.ctrl.m3508_controller[i].given_speed * ECD_TO_AV;
+        motorpower[i].pidOutput = chassis.ctrl.m3508_controller[i].pid.out[0];
+        motorpower[i].pidMaxOutput = chassis.ctrl.m3508_controller[i].pid.max_out;
+    }
+
+    MotorPowerObj *motors[4] = {&motorpower[0], &motorpower[1], &motorpower[2], &motorpower[3]};
+    allocatePowerWithLimit(motors, chassis.power_ctrl_config, chassis.power_ctrl_result);
+
+    for (int i = 0; i < 4; i++)
+    {
+        chassis.ctrl.m3508_controller[i].out = (int16_t)chassis.power_ctrl_result->newTorqueCurrent[i];
+    }
 }
 
 void Send_CanCmd()
 {
     int16_t m3508_iq[4];
     for (int i = 0; i < 4; i++)
-        m3508_iq[i] = (int16_t)chassis.ctrl.m3508_controller[i].pid.out[0];
+        m3508_iq[i] = (int16_t)chassis.ctrl.m3508_controller[i].out;
     const int32_t mf9025_speed = (int32_t)(chassis.ctrl.m9025_controller.pid.out[0] + chassis.ctrl.m9025_controller.ff_speed);
     m3508_ctrl(chassis.m3508, m3508_iq);
     mf9025_ctrl_speed(chassis.mf9025, MF9025_MAX_IQ, mf9025_speed);

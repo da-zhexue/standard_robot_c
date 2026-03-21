@@ -33,6 +33,10 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
+        Module/Referee/referee.c
+        Module/Referee/referee.h
+        Module/Super_Cap/super_cap.c
+        Module/Super_Cap/super_cap.h
 
 )
 

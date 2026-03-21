@@ -7,6 +7,9 @@
 
 #include <math.h>
 
+// 不同车组功率上限
+fp32 sentinelMaxPower[1] = {100.0f};
+
 // 辅助函数声明
 static float clamp(float value, float min, float max);
 static float calculateMotorPower(float torque, float av, float k1, float k2, float k3, int motorCount);
@@ -39,13 +42,9 @@ void allocatePowerWithLimit(MotorPowerObj *objs[4], const PowerControllerConfig 
         // 计算电机功率需求: P = τ·ω + k₁·|ω| + k₂·τ² + k₃/4
         // 其中 τ = k₀ * pidOutput
         const float torque = config->k0 * p->pidOutput;
-        //const float torque = config->k0 * p->Current;
-        result->Torque[i] = torque;
         // cmdPower[i] = torque * p->curAv + fabsf(p->curAv) * config->k1 +
         //               torque * torque * config->k2 + config->k3 / 4.0f;
         cmdPower[i] = calculateMotorPower(torque, p->curAv, config->k1, config->k2, config->k3, 4);
-				result->PowerRequired[i] = cmdPower[i];
-				result->PowerEfficient[i] = torque * p->curAv;
         sumCmdPower += cmdPower[i];
 
         // 计算速度跟随误差
@@ -224,12 +223,18 @@ void setMaxPower(PowerControllerConfig * config, const float maxPower) // 裁判
 uint8_t limitMaxPower(PowerControllerConfig * config, const float buffer)
 {
     const float raw_maxPower = config->maxPower;
-    if (buffer - SENTINEL_POWERBUFFER > 1e-5)
+    if (buffer - POWERBUFFER_MAX > 1e-5)
     {
         config->maxPower = raw_maxPower * 0.80f;
         return 1;
     }
     return 0;
+}
+
+void updatePowerControlConfig(PowerControllerConfig* config, const float k2, const float k3)
+{
+    config->k2 = k2;
+    config->k3 = k3;
 }
 
 /**

@@ -22,14 +22,20 @@ typedef enum
     CMD_IMU_L_INFO = 0x102,
     CMD_MOVE = 0x103,
     CMD_ROTATE = 0x104,
-    CMD_MODE = 0x105,
+    CMD_STATE = 0x105,
     CMD_START = 0x106,
     CMD_ONLINECB = 0x107,
     CMD_POWER = 0x108,
-    CMD_GIMBAL_ROTATE = 0x109,
-    CMD_DEBUG = 0x133,
+    CMD_DEBUG = 0x133
 
 } comm_cmd_t;
+
+typedef enum
+{
+    NAV_STOP = 0,
+    NAV_️RUSH = 1,
+    NAV_SPIN = 2
+} Nav_State;
 
 typedef struct
 {
@@ -37,6 +43,7 @@ typedef struct
     fp32 gimbal_yaw, chassis_yaw;
     uint8_t gimbal_scan;
     uint8_t chassis_spin;
+    Nav_State nav_state;
 } comm_ctrl_t;
 
 typedef struct
@@ -44,6 +51,7 @@ typedef struct
     UART_Instance_t uart_instance;
     uint8_t game_start;
     uint8_t comm_ctrl;
+    fp32 buffer;
     comm_ctrl_t comm_ctrl_param;
     fp32 big_gimbal_angle[3];
 } comm_t;

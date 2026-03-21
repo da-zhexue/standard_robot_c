@@ -10,6 +10,7 @@
 #include "COMM/comm.h"
 #include "Power_Ctrl/power_ctrl.h"
 #include "Power_Ctrl/power_ctrl_param_get.h"
+#include "Super_Cap/super_cap.h"
 
 #define GIMBAL_ANGLE_DELTA_MAX 0.12f
 #define CHASSIS_MAX_V 8.0f
@@ -28,12 +29,13 @@ typedef enum
     CHASSIS_RC = 1,
     CHASSIS_UPC = 2,
     CHASSIS_SHUTDOWN = 3
-} CHASSIS_CONTROLLER;
+} Chassis_Controller;
 
 typedef struct
 {
     pid_t pid;
     int16_t given_speed;
+    fp32 out;
 } m3508_ctrl_t;
 typedef struct
 {
@@ -54,7 +56,9 @@ typedef struct
 
     first_order_filter_type_t chassis_speed_filter[3];
 
-    CHASSIS_CONTROLLER chassis_controller;
+    Chassis_Controller chassis_controller;
+    Nav_State nav_state;
+    fp32 maxpower;
     uint8_t chassis_spin;
     uint8_t gimbal_scan;
     uint8_t gimbal_shutdown_flag;
@@ -73,6 +77,10 @@ typedef struct
     mf9025_instance* mf9025;
     INS_t* ins;
     comm_t* comm;
+    PowerControllerConfig* power_ctrl_config;
+    PowerAllocationResult* power_ctrl_result;
+    PowerControlParam* ctx;
+    super_cap_instance* super_cap;
 
     angle_t chassis_angle;
     angle_t gimbal_angle;

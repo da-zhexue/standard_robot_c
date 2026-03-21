@@ -7,8 +7,8 @@
 
 void cmd_move_handler(const uint8_t* data);
 void cmd_rotate_handler(const uint8_t* data);
-void cmd_shart_handler(const uint8_t* data);
-void cmd_mode_handler(const uint8_t* data);
+void cmd_start_handler(const uint8_t* data);
+void cmd_state_handler(const uint8_t* data);
 void cmd_imu_s_handler(const uint8_t* data);
 void cmd_imu_l_handler(const uint8_t* data);
 void cmd_buffer_handler(const uint8_t* data);
@@ -19,7 +19,7 @@ void cmd_onlinecb_handler(const uint8_t* data);
 void comm_send_start();
 void comm_send_onlinecb();
 
-void comm_decode(uint8_t *data, uint16_t len);
+void comm_callback(uint8_t *data, uint16_t len);
 
 static comm_t* comm_ins = NULL;
 void comm_init(comm_t* comm_instance, UART_HandleTypeDef* comm_uart)
@@ -29,7 +29,7 @@ void comm_init(comm_t* comm_instance, UART_HandleTypeDef* comm_uart)
 	comm_ins = comm_instance;
 	memset(comm_instance, 0, sizeof(comm_t));
 
-	BSP_UART_Init(&comm_instance->uart_instance, comm_uart, comm_decode, NULL, 128, 128);
+	BSP_UART_Init(&comm_instance->uart_instance, comm_uart, comm_callback, NULL, 128, 128);
 }
 
 void comm_decode(uint8_t *data, const uint16_t len)
@@ -55,10 +55,10 @@ void comm_decode(uint8_t *data, const uint16_t len)
 			cmd_rotate_handler(&data[FRAME_HEADER_LEN+CMD_ID_LEN]);
 			break;
 		case CMD_START:
-			cmd_shart_handler(&data[FRAME_HEADER_LEN+CMD_ID_LEN]);
+			cmd_start_handler(&data[FRAME_HEADER_LEN+CMD_ID_LEN]);
 			break;
-		case CMD_MODE:
-			cmd_mode_handler(&data[FRAME_HEADER_LEN+CMD_ID_LEN]);
+		case CMD_STATE:
+			cmd_state_handler(&data[FRAME_HEADER_LEN+CMD_ID_LEN]);
 			break;
 		case CMD_IMU_L_INFO:
 			cmd_imu_l_handler(&data[FRAME_HEADER_LEN+CMD_ID_LEN]);
@@ -69,9 +69,6 @@ void comm_decode(uint8_t *data, const uint16_t len)
 		case CMD_POWER:
 			cmd_buffer_handler(&data[FRAME_HEADER_LEN+CMD_ID_LEN]);
 			break;
-		case CMD_GIMBAL_ROTATE:
-			cmd_gimbal_rotate_handler(&data[FRAME_HEADER_LEN+CMD_ID_LEN]);
-			break;
 //		case CMD_DEBUG:
 //			cmd_debug_handler(&rx_data[FRAME_HEADER_LEN+CMD_ID_LEN]);
 //			break;
@@ -79,6 +76,17 @@ void comm_decode(uint8_t *data, const uint16_t len)
 			break;
 	}
 
+}
+
+void comm_callback(uint8_t *data, const uint16_t len)
+{
+	const uint8_t header = 0xA5;
+	uint16_t headers[5];
+	const uint16_t header_num = find_frame_headers(data, len, &header, 1, headers, 5);
+	for (int i = 0; i < header_num; i++)
+	{
+		comm_decode(data+headers[i], len-headers[i]);
+	}
 }
 
 uint16_t last_bag = 0;
@@ -107,9 +115,12 @@ void cmd_rotate_handler(const uint8_t* data)
 	//LOG_INFO("Get rotate cmd chassis: %.2f, gimbal: %.2f", upc_ptr->chassis_yaw, upc_ptr->gimbal_yaw);
 }
 
-void cmd_mode_handler(const uint8_t* data)
+void cmd_state_handler(const uint8_t* data)
 {
-	comm_ins->comm_ctrl_param.chassis_spin = data[12];
+	comm_ins->comm_ctrl_param.chassis_spin = data[0] & 0x01;
+	comm_ins->comm_ctrl_param.gimbal_scan = (data[0] >> 1) & 0x01;
+	if ((data[0] >> 2 & 0x03) < 3)
+		comm_ins->comm_ctrl_param.nav_state = (data[0] >> 2) & 0x03;
 }
 
 void cmd_imu_l_handler(const uint8_t* data)
@@ -119,7 +130,7 @@ void cmd_imu_l_handler(const uint8_t* data)
 	unpack_4bytes_to_floats(&data[8], &comm_ins->big_gimbal_angle[2]);
 }
 
-void cmd_shart_handler(const uint8_t* data)
+void cmd_start_handler(const uint8_t* data)
 {
 	if (data[0] == 1)
 	{
@@ -138,14 +149,7 @@ void cmd_onlinecb_handler(const uint8_t* data)
 
 void cmd_buffer_handler(const uint8_t* data)
 {
-	static fp32 buffer_ptr, power_max;
-	unpack_4bytes_to_floats(&data[0], &buffer_ptr);
-	unpack_4bytes_to_floats(&data[4], &power_max);
-}
-
-void cmd_gimbal_rotate_handler(const uint8_t* data)
-{
-	comm_ins->comm_ctrl_param.gimbal_scan = data[0];
+	unpack_4bytes_to_floats(&data[0], &comm_ins->buffer);
 }
 
 void CMD_PackPacket(const uint8_t *data_in, const uint16_t data_len, const uint16_t cmd_id)
@@ -202,10 +206,4 @@ void comm_send_onlinecb()
 {
 	static uint8_t send_onlinecb[1] = {1};
 	CMD_PackPacket(send_onlinecb, sizeof(send_onlinecb), SEND_ONLINECB);
-}
-
-void comm_send_cap()
-{
-	static uint8_t send_cap[12]; // 未完成
-	CMD_PackPacket(send_cap, sizeof(send_cap), SEND_SUPERCAP);
 }
