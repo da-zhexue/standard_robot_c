@@ -32,9 +32,8 @@ typedef enum
 
 typedef enum
 {
-    NAV_STOP = 0,
-    NAV_️RUSH = 1,
-    NAV_SPIN = 2
+    NAV_NORMAL = 0,
+    NAV_️RUSH = 1
 } Nav_State;
 
 typedef struct

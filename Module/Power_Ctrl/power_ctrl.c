@@ -225,17 +225,13 @@ uint8_t limitMaxPower(PowerControllerConfig * config, const float buffer)
     const float raw_maxPower = config->maxPower;
     if (buffer - POWERBUFFER_MAX > 1e-5)
     {
-        config->maxPower = raw_maxPower * 0.80f;
+        config->maxPower = fminf(sentinelMaxPower[0], raw_maxPower) * 0.80f;
         return 1;
     }
     return 0;
 }
 
-void updatePowerControlConfig(PowerControllerConfig* config, const float k2, const float k3)
-{
-    config->k2 = k2;
-    config->k3 = k3;
-}
+
 
 /**
  * @brief 示例使用代码

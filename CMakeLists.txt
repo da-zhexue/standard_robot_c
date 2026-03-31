@@ -37,6 +37,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         Module/Referee/referee.h
         Module/Super_Cap/super_cap.c
         Module/Super_Cap/super_cap.h
+        Module/Power_Ctrl/control_loop_example.c
 
 )
 

@@ -15,11 +15,12 @@
 #define M3508_CURRENT_LIMIT 20.0f // M3508最大电流 C620说明书给出最大输出20A
 #define M3508_OUTPUT_LIMIT 16384.0f // 归一化输出上限 -16384~16384 -> -20A~20A
 
-#define K1_CONST 0.2f
+#define K1_CONST 0.22f
 #define K2_CONST 1.2f
 #define K3_CONST 7.0f
 
 #define POWERBUFFER_MAX 60.0f
+#define REMAINPOWER_MIN 14.0f
 extern fp32 sentinelMaxPower[1];
 
 // 电机数据结构
@@ -52,6 +53,7 @@ void allocatePowerWithLimit(MotorPowerObj *objs[4], const PowerControllerConfig 
 void initPowerControllerConfig(PowerControllerConfig *config, float torqueConst, float currentLimit, float outputLimit,
                                 float k1_init, float k2_init, float k3_init, float maxPower);
 void setMaxPower(PowerControllerConfig* config, float maxPower);
+uint8_t limitMaxPower(PowerControllerConfig * config, float buffer);
 void updatePowerControlConfig(PowerControllerConfig* config, float k2, float k3);
 
 #endif //NEW_CHASSIS_POWER_CTRL_H

@@ -252,24 +252,29 @@ void Calc_PIDOut()
 
 void Set_MaxPower()
 {
-    if (chassis.comm->comm_ctrl_param.nav_state >= NAV_STOP && chassis.comm->comm_ctrl_param.nav_state <= NAV_SPIN)
-        chassis.ctrl.nav_state = chassis.comm->comm_ctrl_param.nav_state;
+    chassis.ctrl.nav_state = chassis.comm->comm_ctrl_param.nav_state;
     switch (chassis.ctrl.nav_state) // 该策略仅作联盟赛哨兵使用
     {
-        case NAV_STOP: // 开始未启动前
+        case NAV_NORMAL: // 常规情况，不使用超电
             chassis.ctrl.maxpower = sentinelMaxPower[0];
+            super_cap_use(chassis.super_cap, 0);
             break;
-        case NAV_️RUSH: // ♿️冲刺♿️，拉满超电抢占中心点
-            chassis.ctrl.maxpower = sentinelMaxPower[0] + SUPERCAP_MAXPOWER;
-            break;
-        case NAV_SPIN: // 到达中心点后开启小陀螺
-            chassis.ctrl.maxpower = sentinelMaxPower[0];
+        case NAV_️RUSH: // ♿️冲刺♿️，使用超电抢占中心点
+            chassis.ctrl.maxpower = sentinelMaxPower[0] + chassis.super_cap->power_data.supercap_power;
+            super_cap_use(chassis.super_cap, 1);
             break;
         default:
+            chassis.ctrl.maxpower = sentinelMaxPower[0];
+            super_cap_use(chassis.super_cap, 0);
             break;
     }
+    if (chassis.super_cap->power_data.remain_v < REMAINPOWER_MIN) // 超电剩余能量过低时不使用超电
+    {
+        chassis.ctrl.maxpower = sentinelMaxPower[0];
+        super_cap_use(chassis.super_cap, 0);
+    }
     setMaxPower(chassis.power_ctrl_config, chassis.ctrl.maxpower);
-    //limitMaxPower(chassis.power_ctrl_config, chassis.comm->comm_ctrl_param.);
+    limitMaxPower(chassis.power_ctrl_config, chassis.comm->buffer);
 }
 
 void Update_PowerParam()
