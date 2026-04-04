@@ -12,7 +12,7 @@ void Referee_Init(referee_t *referee_ptr, UART_HandleTypeDef *referee_uart)
         return;
     memset(referee_ptr, 0, sizeof(referee_t));
     referee_ins = referee_ptr;
-    BSP_UART_Init(&referee_ptr->uart_instance, referee_uart, Referee_RxCallback, NULL, 0, RX_BUFFER_SIZE);
+    BSP_UART_Init(&referee_ptr->uart_instance, referee_uart, 115200, Referee_RxCallback, NULL, 0, RX_BUFFER_SIZE);
 }
 
 void Referee_RxCallback(uint8_t* data, const uint16_t len)

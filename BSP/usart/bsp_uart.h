@@ -44,6 +44,7 @@ struct UART_Handle_s {
 /* Function prototypes */
 UART_Status_t BSP_UART_Init(UART_Instance_t *uart_ins,
                            UART_HandleTypeDef *huart,
+                           uint32_t baudrate,
                            UART_RxCallback_t rxCallback,
                            UART_ErrorCallback_t errorCallback,
                            uint16_t txBufferSize,

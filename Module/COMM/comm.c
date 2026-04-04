@@ -29,7 +29,7 @@ void comm_init(comm_t* comm_instance, UART_HandleTypeDef* comm_uart)
 	comm_ins = comm_instance;
 	memset(comm_instance, 0, sizeof(comm_t));
 
-	BSP_UART_Init(&comm_instance->uart_instance, comm_uart, comm_callback, NULL, 128, 128);
+	BSP_UART_Init(&comm_instance->uart_instance, comm_uart, 115200, comm_callback, NULL, 128, 128);
 }
 
 void comm_decode(uint8_t *data, const uint16_t len)

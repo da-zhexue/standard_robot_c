@@ -77,6 +77,7 @@ static UART_Status_t UART_DMA_Stop_Receive(const UART_Instance_t *uart_ins)
  * @brief  使用DMA和回调初始化UART外设
  * @param  uart_ins: 指向UART句柄结构的指针
  * @param  huart: 指向HAL UART句柄
+ * @param baudrate: UART通信波特率
  * @param  rxCallback: 接收回调函数指针
  * @param  errorCallback: 错误回调函数指针（可为NULL）
  * @param txBufferSize: 发送缓冲区大小
@@ -85,6 +86,7 @@ static UART_Status_t UART_DMA_Stop_Receive(const UART_Instance_t *uart_ins)
  */
 UART_Status_t BSP_UART_Init(UART_Instance_t *uart_ins,
                            UART_HandleTypeDef *huart,
+                           const uint32_t baudrate,
                            const UART_RxCallback_t rxCallback,
                            const UART_ErrorCallback_t errorCallback,
                            const uint16_t txBufferSize,
@@ -93,6 +95,8 @@ UART_Status_t BSP_UART_Init(UART_Instance_t *uart_ins,
     if(uart_ins == NULL || huart == NULL) {
         return UART_ERROR_INVALID_PARAM;
     }
+    huart->Init.BaudRate = baudrate;
+    HAL_UART_Init(huart);
 
     /* 验证DMA句柄 */
     if (huart->hdmarx == NULL) {

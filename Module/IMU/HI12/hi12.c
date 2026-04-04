@@ -10,7 +10,7 @@ void HI12_Init(hi12_t* hi12_ptr, UART_HandleTypeDef* uart_handle)
     if (hi12_ptr == NULL || uart_handle == NULL)
         return;
     hi12_ins = hi12_ptr;
-    BSP_UART_Init(&hi12_ptr->imu_uart, uart_handle, imuCallback, NULL, 0, RX_BUFFER_SIZE);
+    BSP_UART_Init(&hi12_ptr->imu_uart, uart_handle, 256000, imuCallback, NULL, 0, RX_BUFFER_SIZE);
 }
 
 void imuCallback(uint8_t* data, const uint16_t len)

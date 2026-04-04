@@ -13,7 +13,7 @@ void dbus_init(rc_instance* rc_ins, const RC_MODE mode, CAN_HandleTypeDef* hcan)
     else if (mode == RC_CAN)
         rc_ins->rc_data.mode = RC_CAN;
     if (rc_ins->rc_data.mode == RC_DIRECT)
-        BSP_UART_Init(&rc_ins->dbus_usart, &DBUS_HUART, RemoteDataProcess_UART, NULL, 0, DBUS_MAX_LEN);
+        BSP_UART_Init(&rc_ins->dbus_usart, &DBUS_HUART, 100000, RemoteDataProcess_UART, NULL, 0, DBUS_MAX_LEN);
     else
     {
         rc_ins->dbus_can = BSP_CAN_Init(hcan);

@@ -12,7 +12,7 @@ void NUC_Init(nuc_ctrl_t* nuc_ptr, UART_HandleTypeDef *nuc_uart)
         return;
     memset(nuc_ptr, 0, sizeof(nuc_ctrl_t));
     nuc_ins = nuc_ptr;
-    BSP_UART_Init(&nuc_ptr->nuc_uart, nuc_uart, NucRxCallback, NULL, TX_BUFFER_SIZE, RX_BUFFER_SIZE);
+    BSP_UART_Init(&nuc_ptr->nuc_uart, nuc_uart, 115200, NucRxCallback, NULL, TX_BUFFER_SIZE, RX_BUFFER_SIZE);
 }
 
 void NUC_Chassis_Handler(const uint8_t* data, uint16_t len);
