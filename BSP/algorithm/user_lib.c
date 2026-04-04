@@ -537,3 +537,26 @@ float Get_OLS_Smooth(const Ordinary_Least_Squares_t *OLS)
 {
     return OLS->k * OLS->x[OLS->Order - 1] + OLS->b;
 }
+
+// 四元数转欧拉角 (角度制)
+void quaternion_to_euler(const fp32 q[4], fp32 euler_angle[3])
+{
+    if (q == NULL || euler_angle == NULL) return;
+
+    // roll (x-axis rotation)
+    fp32 sinr_cosp = 2.0f * (q[0] * q[1] + q[2] * q[3]);
+    fp32 cosr_cosp = 1.0f - 2.0f * (q[1] * q[1] + q[2] * q[2]);
+    euler_angle[0] = atan2f(sinr_cosp, cosr_cosp) * RADIAN_COEF;
+
+    // pitch (y-axis rotation)
+    fp32 sinp = 2.0f * (q[0] * q[2] - q[3] * q[1]);
+    if (fabs(sinp) >= 1)
+        euler_angle[1] = copysignf(90.0f, sinp); // use 90 degrees if out of range
+    else
+        euler_angle[1] = asinf(sinp) * RADIAN_COEF;
+
+    // yaw (z-axis rotation)
+    fp32 siny_cosp = 2.0f * (q[0] * q[3] + q[1] * q[2]);
+    fp32 cosy_cosp = 1.0f - 2.0f * (q[2] * q[2] + q[3] * q[3]);
+    euler_angle[2] = atan2f(siny_cosp, cosy_cosp) * RADIAN_COEF;
+}

@@ -144,4 +144,7 @@ uint16_t find_frame_headers(
     uint16_t max_positions
 );
 
+// 四元数转欧拉角 (角度制)
+void quaternion_to_euler(const fp32 q[4], fp32 euler_angle[3]);
+
 #endif

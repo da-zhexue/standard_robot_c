@@ -1,7 +1,7 @@
 #include "ins.h"
 #include "../../../BSP/algorithm/pid_enhanced.h"
 #include "IMU/EKF/QuaternionEKF.h"
-#include "pwm/bsp_PWM.h"
+#include "pwm/bsp_pwm.h"
 #include "dwt/bsp_dwt.h"
 #include "robot_config.h"
 
@@ -16,18 +16,16 @@ const float xb[3] = {1, 0, 0};
 const float yb[3] = {0, 1, 0};
 const float zb[3] = {0, 0, 1};
 
-static INS_t *ins_instance = NULL;
 void INS_Init(INS_t *INS)
 {
     if (INS == NULL)
         return ;
-    ins_instance = INS;
     BMI088_Init(&INS->imu);
+    BSP_PWM_Init(&INS->pwm, &htim10, TIM_CHANNEL_1);
 
 #ifdef USE_CBOARD_IMU
     IMU_QuaternionEKF_Init(10, 0.001f, 10000000, 1, 0);
     PID_plus_Init(&TempCtrl, 2000, 300, 0, 1000, 20, 0, 0, 0, 0, 0, 0, 0);
-    HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
     INS->ins.AccelLPF = 0.0085f;
 #endif
 }
@@ -132,5 +130,5 @@ void IMU_Temperature_Ctrl(const INS_t *ins_ins)
     PID_plus_Calculate(&TempCtrl, ins_ins->imu.Temperature, RefTemp);
     fp32 temp_out = TempCtrl.Output;
     float_constrain(&temp_out, 0, (fp32)UINT32_MAX * 1.0f);
-    TIM_Set_PWM(&htim10, TIM_CHANNEL_1, (uint16_t)temp_out);
+    BSP_PWM_SetValue(&ins_ins->pwm, (uint16_t)temp_out);
 }

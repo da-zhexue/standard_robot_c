@@ -1,19 +1,8 @@
-/**
- ******************************************************************************
- * @file    ins_task.h
- * @author  Wang Hongxi
- * @version V2.0.0
- * @date    2022/2/23
- * @brief
- ******************************************************************************
- * @attention
- *
- ******************************************************************************
- */
-#ifndef __INS_TASK_H
-#define __INS_TASK_H
+#ifndef INS_TASK_H
+#define INS_TASK_H
 
 #include "IMU/BMI088/BMI088driver.h"
+#include "pwm/bsp_pwm.h"
 
 #define INS_TASK_PERIOD 1
 
@@ -47,6 +36,7 @@ typedef struct
 {
     INS_data_t ins;
     IMU_Data_t imu;
+    pwm_instance pwm;
 } INS_t;
 
 void INS_Init(INS_t *INS);

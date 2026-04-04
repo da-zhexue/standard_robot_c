@@ -2,6 +2,7 @@
 #define STANDARD_ROBOT_C_DBUS_H
 #include "typedef.h"
 #include "usart/bsp_uart.h"
+#include "can/bsp_can.h"
 
 /* ----------------------- RC Channel Definition---------------------------- */
 #define RC_CH_VALUE_MIN ((uint16_t)364)
@@ -25,7 +26,13 @@
 #define DBUS_MAX_LEN     (36)
 #define DBUS_BUFLEN      (18)
 #define DBUS_HUART       huart3
+#define DBUS_RXID        0x602
 
+typedef enum
+{
+    RC_CHASSIS = 0,
+    RC_GIMBAL = 1
+} RC_MODE;
 typedef struct
 {
     int16_t ch0;
@@ -34,15 +41,17 @@ typedef struct
     int16_t ch3;
     uint8_t s1;
     uint8_t s2;
-    uint8_t sw2;
+    int16_t roll;
+    RC_MODE mode;
 } rc_data_t;
 
 typedef struct
 {
     rc_data_t rc_data;
     UART_Instance_t dbus_usart;
+    CAN_Instance_t* dbus_can;
 } rc_instance;
 
-void dbus_init(rc_instance* rc_ins);
+void dbus_init(rc_instance* rc_ins, RC_MODE mode, CAN_HandleTypeDef* hcan);
 
 #endif //STANDARD_ROBOT_C_DBUS_H

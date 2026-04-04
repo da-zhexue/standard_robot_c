@@ -1,4 +1,4 @@
-/* 通信板仅做哨兵临时方案，希望后续能够去掉 */
+/* 已废弃 */
 
 #include "comm.h"
 #include "crc.h"
@@ -119,8 +119,8 @@ void cmd_state_handler(const uint8_t* data)
 {
 	comm_ins->comm_ctrl_param.chassis_spin = data[0] & 0x01;
 	comm_ins->comm_ctrl_param.gimbal_scan = (data[0] >> 1) & 0x01;
-	if ((data[0] >> 2 & 0x03) < 3)
-		comm_ins->comm_ctrl_param.nav_state = (data[0] >> 2) & 0x03;
+	if (((data[0] >> 3) & 0x03) < 3)
+		comm_ins->comm_ctrl_param.nav_state = (data[0] >> 3) & 0x03;
 }
 
 void cmd_imu_l_handler(const uint8_t* data)
@@ -152,7 +152,7 @@ void cmd_buffer_handler(const uint8_t* data)
 	unpack_4bytes_to_floats(&data[0], &comm_ins->buffer);
 }
 
-void CMD_PackPacket(const uint8_t *data_in, const uint16_t data_len, const uint16_t cmd_id)
+void CommCmd_PackPacket(const uint8_t *data_in, const uint16_t data_len, const uint16_t cmd_id)
 {
 	const uint16_t total_len = FRAME_HEADER_LEN + CMD_ID_LEN + data_len + 2;
 	uint8_t data_out[total_len];
@@ -180,7 +180,7 @@ void comm_send_attitude(const fp32 chassis_yaw)
 	static uint8_t send_yaw[4] = {0};
 	pack_float_to_4bytes(chassis_yaw, &send_yaw[0]);
 	//LOG_INFO("send chassis yaw: %.2f", SEND_ATTITUDE, tf_ptr->Chassis_angle.yaw_deg);
-	CMD_PackPacket(send_yaw, sizeof(send_yaw), SEND_ATTITUDE);
+	CommCmd_PackPacket(send_yaw, sizeof(send_yaw), SEND_ATTITUDE);
 }
 //
 // void comm_send_onlinestate()
@@ -198,12 +198,12 @@ void comm_send_attitude(const fp32 chassis_yaw)
 void comm_send_start()
 {
 	static uint8_t send_start[1] = {1};
-	CMD_PackPacket(send_start, sizeof(send_start), SEND_START);
+	CommCmd_PackPacket(send_start, sizeof(send_start), SEND_START);
 	//LOG_INFO("START!");
 }
 
 void comm_send_onlinecb()
 {
 	static uint8_t send_onlinecb[1] = {1};
-	CMD_PackPacket(send_onlinecb, sizeof(send_onlinecb), SEND_ONLINECB);
+	CommCmd_PackPacket(send_onlinecb, sizeof(send_onlinecb), SEND_ONLINECB);
 }
