@@ -1,5 +1,6 @@
 #include "gimbal.h"
 #include "can.h"
+#include "usart.h"
 
 const pid_config yaw_pid_config = {.mode = PID_POSITION, .kp = 50.0f, .ki = 0.0f, .kd = 10.0f, .max_out = 16000.0f, .max_iout = 3000.0f,
     .out_limit_delta_P = 1000.0f, .out_limit_delta_N = 4000.0f, .deadzone = 0.0f};
@@ -32,9 +33,10 @@ void gimbal_init(gimbal_t* gimbal_ptr)
     m2006_init(&gimbal_ptr->trigger_motor, &hcan1, 0x200, 1);
     m3508_init(&gimbal_ptr->friction_motor, &hcan1, 0x1FF, 2);
 
-    CBoard_Gimbal_Init(&gimbal_ptr->cbord_gimbal, &hcan2);
+    CBoard_Gimbal_Init(&gimbal_ptr->cboard_gimbal, &hcan2);
     NX_Init(&gimbal_ptr->nx_ctrl, &hcan2);
     dbus_init(&gimbal_ptr->rc, RC_DIRECT, &hcan2);
+    HI12_Init(&gimbal_ptr->hi12, &huart1);
 
     gimbal_pid_init(gimbal_ptr);
 }
@@ -54,7 +56,6 @@ void Gimbal_Task(const void* argument)
             gimbal_fire_confirm(&gimbal);
             gimbal_calc_pid_out(&gimbal);
             gimbal_send_can_cmd(&gimbal);
-            gimbal_send_angle(&gimbal);
         }
         if (ctrl_loop % 5 == 0) // 通信循环 200Hz左右
         {
@@ -79,7 +80,7 @@ static void gimbal_pid_init(gimbal_t* gimbal_ptr)
 
 static uint8_t gimbal_check_game_start(const gimbal_t* gimbal_ptr)
 {
-    return gimbal_ptr->cbord_gimbal.game_start;
+    return gimbal_ptr->cboard_gimbal.game_start;
 }
 
 static void gimbal_switch_controller(gimbal_t* gimbal_ptr)
@@ -186,14 +187,16 @@ static void gimbal_send_rc(const gimbal_t* gimbal_ptr)
     sw[0] = gimbal_ptr->rc.rc_data.s1;
     sw[1] = gimbal_ptr->rc.rc_data.s2;
     const int16_t roll = gimbal_ptr->rc.rc_data.roll;
-    CBoard_RC_Transmit(&gimbal_ptr->cbord_gimbal, ch, sw, roll);
+    CBoard_RC_Transmit(&gimbal_ptr->cboard_gimbal, ch, sw, roll);
 }
 
 static void gimbal_send_angle(const gimbal_t* gimbal_ptr)
 {
     fp32 q[4];
     const fp32 euler_angle[3] = {gimbal_ptr->angle.yaw_deg, gimbal_ptr->angle.pitch_deg, 0.0f};
+    const fp32 gimbal_yaw = gimbal_ptr->hi12.imu_data.yaw;
 
     euler_to_quaternion(euler_angle, q);
     NX_SendAngle(&gimbal_ptr->nx_ctrl, q);
+    CBoard_IMU_Transmit(&gimbal_ptr->cboard_gimbal, gimbal_yaw);
 }

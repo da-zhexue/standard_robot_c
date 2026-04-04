@@ -267,7 +267,7 @@ void BSP_UART_IRQHandler(const UART_Instance_t *uart_ins)
 
             /* 如果已注册则调用接收回调 */
             if(uart_ins->RxCallback != NULL && receivedLength > 0) {
-                uart_ins->RxCallback(uart_ins->rxBuffer[0], receivedLength);
+                uart_ins->RxCallback((uint8_t*)uart_ins->rxBuffer[0], receivedLength);
             }
             __HAL_DMA_ENABLE(uart_ins->handle->hdmarx);
         } else {
@@ -278,7 +278,7 @@ void BSP_UART_IRQHandler(const UART_Instance_t *uart_ins)
 
             /* 如果已注册则调用接收回调 */
             if(uart_ins->RxCallback != NULL && receivedLength > 0) {
-                uart_ins->RxCallback(uart_ins->rxBuffer[1], receivedLength);
+                uart_ins->RxCallback((uint8_t*)uart_ins->rxBuffer[1], receivedLength);
             }
             __HAL_DMA_ENABLE(uart_ins->handle->hdmarx);
         }

@@ -2,31 +2,14 @@
 #define STANDARD_ROBOT_C_REFEREE_H
 #include "usart/bsp_uart.h"
 
-#ifdef __GNUC__
-    #ifdef __clang__
-        // Clang 编译器
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wignored-attributes"
-        #define PACKED __attribute__((packed))
-    #else
-        // GCC 编译器
-        #define PACKED __attribute__((packed))
-    #endif
-#elif defined(_MSC_VER)
-    #define PACKED
-    #pragma pack(push, 1)
-#else
-    #define PACKED
-    #pragma pack(1)
-#endif
-
 #define SOF_VALUE       0xA5
 #define FRAME_HEADER_LEN  5
 #define CMD_ID_LEN        2
 #define CRC16_LEN         2
 
+#pragma pack(push, 1)
 // ==================== 通用帧结构 ====================
-typedef PACKED struct {
+typedef struct {
     uint8_t sof;          // 0xA5
     uint16_t data_length;
     uint8_t seq;
@@ -79,7 +62,7 @@ typedef enum {
 // ==================== 数据结构体定义 ====================
 
 // 1. 比赛状态数据 (0x0001)
-typedef PACKED struct {
+typedef struct {
     uint8_t game_type : 4;
     uint8_t game_progress : 4;
     uint16_t stage_remain_time;
@@ -87,12 +70,12 @@ typedef PACKED struct {
 } game_status_t;
 
 // 2. 比赛结果数据 (0x0002)
-typedef PACKED struct {
+typedef struct {
     uint8_t winner;
 } game_result_t;
 
 // 3. 机器人血量数据 (0x0003)
-typedef PACKED struct {
+typedef struct {
     uint16_t ally_1_robot_HP;
     uint16_t ally_2_robot_HP;
     uint16_t ally_3_robot_HP;
@@ -104,25 +87,25 @@ typedef PACKED struct {
 } game_robot_HP_t;
 
 // 4. 场地事件数据 (0x0101)
-typedef PACKED struct {
+typedef struct {
     uint32_t event_data;
 } event_data_t;
 
 // 5. 裁判警告数据 (0x0104)
-typedef PACKED struct {
+typedef struct {
     uint8_t level;
     uint8_t offending_robot_id;
     uint8_t count;
 } referee_warning_t;
 
 // 6. 飞镖发射数据 (0x0105)
-typedef PACKED struct {
+typedef struct {
     uint8_t dart_remaining_time;
     uint16_t dart_info;
 } dart_info_t;
 
 // 7. 机器人性能体系数据 (0x0201)
-typedef PACKED struct {
+typedef struct {
     uint8_t robot_id;
     uint8_t robot_level;
     uint16_t current_HP;
@@ -136,7 +119,7 @@ typedef PACKED struct {
 } robot_performance_t;
 
 // 8. 实时底盘缓冲能量和射击热量数据 (0x0202)
-typedef PACKED struct {
+typedef struct {
     uint16_t reserved1;
     uint16_t reserved2;
     float reserved3;
@@ -146,14 +129,14 @@ typedef PACKED struct {
 } power_heat_data_t;
 
 // 9. 机器人位置数据 (0x0203)
-typedef PACKED struct {
+typedef struct {
     float x;
     float y;
     float angle;
 } robot_pos_t;
 
 // 10. 增益和底盘能量数据 (0x0204)
-typedef PACKED struct {
+typedef struct {
     uint8_t hp_recovery_gain;
     uint16_t cooling_gain;
     uint8_t defense_gain;
@@ -163,13 +146,13 @@ typedef PACKED struct {
 } buff_data_t;
 
 // 11. 伤害状态数据 (0x0206)
-typedef PACKED struct {
+typedef struct {
     uint8_t armor_id : 4;
     uint8_t HP_deduction_reason : 4;
 } hurt_data_t;
 
 // 12. 弹丸发射数据 (0x0207)
-typedef PACKED struct {
+typedef struct {
     uint8_t bullet_type;
     uint8_t shooter_number;
     uint8_t launching_frequency;
@@ -177,7 +160,7 @@ typedef PACKED struct {
 } shoot_data_t;
 
 // 13. 弹丸允许发弹量数据 (0x0208)
-typedef PACKED struct {
+typedef struct {
     uint16_t projectile_allowance_17mm;
     uint16_t projectile_allowance_42mm;
     uint16_t remaining_gold;
@@ -185,13 +168,13 @@ typedef PACKED struct {
 } projectile_allowance_t;
 
 // 14. RFID状态数据 (0x0209)
-typedef PACKED struct {
+typedef struct {
     uint32_t rfid_status;
     uint8_t rfid_status_2;
 } rfid_status_t;
 
 // 15. 飞镖客户端指令数据 (0x020A)
-typedef PACKED struct {
+typedef struct {
     uint8_t dartlaunch_opening_status;
     uint8_t reserved;
     uint16_t target_change_time;
@@ -199,7 +182,7 @@ typedef PACKED struct {
 } dart_client_cmd_t;
 
 // 16. 机器人位置扩展数据 (0x020B)
-typedef PACKED struct {
+typedef struct {
     float hero_x;
     float hero_y;
     float engineer_x;
@@ -213,19 +196,19 @@ typedef PACKED struct {
 } robot_pos_ext_t;
 
 // 17. 标记进度数据 (0x020C)
-typedef PACKED struct {
+typedef struct {
     uint16_t mark_info;
 } mark_progress_t;
 
 // 18. 哨兵信息数据 (0x020D)
-typedef PACKED struct {
+typedef struct {
     uint32_t sentry_info;
     uint16_t sentry_info_2;
 } sentry_info_t;
 
 
 // 20. 机器人交互数据头 (0x0301)
-typedef PACKED struct {
+typedef struct {
     uint16_t data_cmd_id;
     uint16_t sender_id;
     uint16_t receiver_id;
@@ -233,13 +216,13 @@ typedef PACKED struct {
 } robot_interaction_data_t;
 
 // 21. 删除图层指令 (子内容ID: 0x0100)
-typedef PACKED struct {
+typedef struct {
     uint8_t delete_type;
     uint8_t layer;
 } interaction_layer_delete_t;
 
 // 22. 图形绘制指令 (子内容ID: 0x0101)
-typedef PACKED struct {
+typedef struct {
     uint8_t figure_name[3];
     uint32_t operate_type : 3;
     uint32_t figure_type : 3;
@@ -256,38 +239,38 @@ typedef PACKED struct {
 } interaction_figure_t;
 
 // 23. 多个图形绘制结构体
-typedef PACKED struct {
+typedef struct {
     interaction_figure_t figure1;
     interaction_figure_t figure2;
 } interaction_figure_2_t;
 
-typedef PACKED struct {
+typedef struct {
     interaction_figure_t figure[5];
 } interaction_figure_3_t;
 
-typedef PACKED struct {
+typedef struct {
     interaction_figure_t figure[7];
 } interaction_figure_4_t;
 
 // 24. 自定义字符图形 (子内容ID: 0x0110)
-typedef PACKED struct {
+typedef struct {
     interaction_figure_t graphic_data_struct;
     uint8_t data[30];
 } ext_client_custom_character_t;
 
 // 25. 哨兵自主决策指令 (子内容ID: 0x0120)
-typedef PACKED struct {
+typedef struct {
     uint32_t sentry_cmd;
 } sentry_cmd_t;
 
 // 26. 雷达自主决策指令 (子内容ID: 0x0121)
-typedef PACKED struct {
+typedef struct {
     uint8_t radar_trigger;
     uint8_t key[7];
 } radar_cmd_t;
 
 // 27. 小地图指令数据 (0x0303)
-typedef PACKED struct {
+typedef struct {
     float target_position_x;
     float target_position_y;
     uint8_t cmd_keyboard;
@@ -296,7 +279,7 @@ typedef PACKED struct {
 } map_command_t;
 
 // 28. 小地图机器人位置数据 (0x0305)
-typedef PACKED struct {
+typedef struct {
     uint16_t hero_position_x;
     uint16_t hero_position_y;
     uint16_t engineer_position_x;
@@ -312,7 +295,7 @@ typedef PACKED struct {
 } map_robot_data_t;
 
 // 29. 路径规划数据 (0x0307)
-typedef PACKED struct {
+typedef struct {
     uint8_t intention;
     uint16_t start_position_x;
     uint16_t start_position_y;
@@ -322,27 +305,27 @@ typedef PACKED struct {
 } map_data_t;
 
 // 30. 自定义消息数据 (0x0308)
-typedef PACKED struct {
+typedef struct {
     uint16_t sender_id;
     uint16_t receiver_id;
     uint8_t user_data[30];
 } custom_info_t;
 
 // 31. 自定义控制器数据 (0x0302, 0x0309, 0x0310)
-typedef PACKED struct {
+typedef struct {
     uint8_t data[30];
 } custom_robot_data_t;
 
-typedef PACKED struct {
+typedef struct {
     uint8_t data[30];
 } robot_custom_data_t;
 
-typedef PACKED struct {
+typedef struct {
     uint8_t data[150];
 } robot_custom_data_2_t;
 
 // 32. 键鼠遥控数据 (0x0304)
-typedef PACKED struct {
+typedef struct {
     int16_t mouse_x;
     int16_t mouse_y;
     int16_t mouse_z;
@@ -353,7 +336,7 @@ typedef PACKED struct {
 } remote_control_t;
 
 // 33. 自定义控制器模拟键鼠数据 (0x0306)
-typedef PACKED struct {
+typedef struct {
     uint16_t key_value;
     uint16_t x_position : 12;
     uint16_t mouse_left : 4;
@@ -363,10 +346,10 @@ typedef PACKED struct {
 } custom_controller_data_t;
 
 // 35. 图传信道设置 (0x0F01, 0x0F02)
-typedef PACKED struct {
+typedef struct {
     uint8_t channel;
 } channel_setting_t;
-
+#pragma pack(pop)
 typedef struct{
     UART_Instance_t uart_instance;
 

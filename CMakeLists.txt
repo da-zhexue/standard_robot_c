@@ -33,6 +33,8 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
+        Module/IMU/HI12/hi12.c
+        Module/IMU/HI12/hi12.h
 
 )
 

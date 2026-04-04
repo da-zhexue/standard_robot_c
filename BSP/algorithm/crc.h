@@ -9,6 +9,8 @@ void Append_CRC8_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
 
 uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage,uint32_t dwLength,uint16_t wCRC);
 uint8_t Verify_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
-void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength) ;
+void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength);
+
+void crc16_update(uint16_t *currectCrc, const uint8_t *src, uint32_t lengthInBytes);
 
 #endif

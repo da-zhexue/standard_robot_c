@@ -7,7 +7,8 @@ typedef enum
 {
     CMD_ID_REFEREE_GET = 0x601,
     CMD_ID_RC_TRAN = 0x602,
-} cbord_gimbal_cmd_id_t;
+    CMD_ID_IMU_TRAN = 0x603,
+} cboard_gimbal_cmd_id_t;
 
 typedef struct
 {
@@ -17,9 +18,10 @@ typedef struct
     uint8_t attitude;
     uint16_t shoot_heat;
     uint16_t bullet_allow;
-} cbord_gimbal_t;
+} cboard_gimbal_t;
 
-void CBoard_Gimbal_Init(cbord_gimbal_t* cbord_gimbal_ptr, CAN_HandleTypeDef* hcan);
-void CBoard_RC_Transmit(const cbord_gimbal_t* cbord_gimbal_ptr, const int16_t ch[4], const uint8_t sw[2], int16_t roll);
+void CBoard_Gimbal_Init(cboard_gimbal_t* cbord_gimbal_ptr, CAN_HandleTypeDef* hcan);
+void CBoard_RC_Transmit(const cboard_gimbal_t* cbord_gimbal_ptr, const int16_t ch[4], const uint8_t sw[2], int16_t roll);
+void CBoard_IMU_Transmit(const cboard_gimbal_t* cbord_gimbal_ptr, fp32 imu_yaw);
 
 #endif //STANDARD_ROBOT_C_CBOARD_GIMBAL_H

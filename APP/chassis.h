@@ -94,7 +94,7 @@ typedef struct
     super_cap_instance super_cap; // 超级电容实例
     nuc_ctrl_t nuc_ctrl; // NUC控制实例
     referee_t referee; // 裁判系统实例
-    cbord_chassis_t cbord_chassis; // 底盘通信实例
+    cboard_chassis_t cbord_chassis; // 底盘通信实例
 
     angle_t chassis_angle; // 底盘角度数据
     angle_t gimbal_angle; // 云台角度数据

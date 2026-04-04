@@ -284,10 +284,8 @@ float theta_format(const float Ang)
 
 int float_rounding(const float raw)
 {
-    static int integer;
-    static float decimal;
-    integer = (int)raw;
-    decimal = raw - (fp32)integer;
+    int integer = (int)raw;
+    const float decimal = raw - (fp32)integer;
     if (decimal > 0.5f)
         integer++;
     return integer;

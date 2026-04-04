@@ -142,3 +142,22 @@ void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength)
 	pchMessage[dwLength-2] = (uint8_t)(wCRC & 0x00ff); 
 	pchMessage[dwLength-1] = (uint8_t)((wCRC >> 8)& 0x00ff);
 }
+
+void crc16_update(uint16_t *currectCrc, const uint8_t *src, uint32_t lengthInBytes)
+{
+	uint32_t crc = *currectCrc;
+	uint32_t j;
+	for (j=0; j < lengthInBytes; ++j){
+		uint32_t i;
+		uint32_t byte = src[j];
+		crc ^= byte << 8;
+		for (i = 0; i < 8; ++i){
+			uint32_t temp = crc << 1;
+			if (crc & 0x8000){
+				temp ^= 0x1021;
+			}
+			crc = temp;
+		}
+	}
+	*currectCrc = crc;
+}

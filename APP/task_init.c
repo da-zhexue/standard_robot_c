@@ -13,10 +13,10 @@ void task_init()
     osThreadDef(ChassisTask, Chassis_Task, osPriorityNormal, 0, 256);
     chassis_taskHandle = osThreadCreate(osThread(ChassisTask), NULL);
 #endif
+
+#ifdef GIMBAL
     osThreadDef(GimbalTask, Gimbal_Task, osPriorityNormal, 0, 256);
     gimbal_taskHandle = osThreadCreate(osThread(GimbalTask), NULL);
-#ifdef GIMBAL
-
 #endif
 
     osThreadDef(DaemonTask, Daemon_Task, osPriorityLow, 0, 128);

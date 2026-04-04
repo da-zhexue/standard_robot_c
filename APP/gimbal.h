@@ -9,6 +9,7 @@
 #include "COMM/CBoard_gimbal.h"
 #include "NX/nx.h"
 #include "DBUS/dbus.h"
+#include "IMU/HI12/hi12.h"
 
 #define SMALL_GIMBAL_ANGLE_DELTA_MAX 0.04f
 #define TRIGGER_SPEED_MAX 1000.0f
@@ -71,9 +72,10 @@ typedef struct
     gm6020_instance angle_motor;
     m2006_instance trigger_motor;
     m3508_instance friction_motor;
-    cbord_gimbal_t cbord_gimbal;
+    cboard_gimbal_t cboard_gimbal;
     nx_ctrl_t nx_ctrl;
     rc_instance rc;
+    hi12_t hi12;
 
     angle_t angle;
 } gimbal_t;

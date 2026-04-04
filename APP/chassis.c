@@ -240,7 +240,6 @@ static void chassis_calc_angle(chassis_t* chassis_ptr)
     zero_diff = theta_format((fp32)chassis_ptr->mf9025.ecd.zero_offset/ MF9025_ECD_MAX * DEG_PER_CIRCLE);
     chassis_angle_temp[0] = theta_format(yaw_diff + gimbal_l_ptr[0] + zero_diff);
 
-    Angle_Update(&chassis_ptr->gimbal_angle, gimbal_l_ptr);
     Angle_Update(&chassis_ptr->chassis_angle, chassis_angle_temp);
 }
 
