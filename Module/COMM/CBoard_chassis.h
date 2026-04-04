@@ -6,7 +6,7 @@
 typedef enum
 {
     CMD_ID_REFEREE_TRAN = 0x601,
-    CMD_ID_RC_TRAN = 0x602, // 为统一，将can总线上传输的遥控器数据也放在了DBUS内，方便底盘控制器调用，这里只是说明这个数据是从云台发向底盘的
+    CMD_ID_RC_GET = 0x602, // 为统一，将can总线上传输的遥控器数据也放在了DBUS内，方便底盘控制器调用，这里只是说明这个数据是从云台发向底盘的
     CMD_ID_IMU = 0x0CFF46,
 } cbord_chassis_cmd_id_t;
 

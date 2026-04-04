@@ -30,8 +30,8 @@
 
 typedef enum
 {
-    RC_CHASSIS = 0,
-    RC_GIMBAL = 1
+    RC_DIRECT = 0,
+    RC_CAN = 1
 } RC_MODE;
 typedef struct
 {

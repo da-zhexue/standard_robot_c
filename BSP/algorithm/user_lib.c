@@ -543,20 +543,42 @@ void quaternion_to_euler(const fp32 q[4], fp32 euler_angle[3])
 {
     if (q == NULL || euler_angle == NULL) return;
 
-    // roll (x-axis rotation)
-    fp32 sinr_cosp = 2.0f * (q[0] * q[1] + q[2] * q[3]);
-    fp32 cosr_cosp = 1.0f - 2.0f * (q[1] * q[1] + q[2] * q[2]);
-    euler_angle[0] = atan2f(sinr_cosp, cosr_cosp) * RADIAN_COEF;
+    // yaw (z-axis rotation)
+    const fp32 siny_cosp = 2.0f * (q[0] * q[3] + q[1] * q[2]);
+    const fp32 cosy_cosp = 1.0f - 2.0f * (q[2] * q[2] + q[3] * q[3]);
+    euler_angle[0] = atan2f(siny_cosp, cosy_cosp) * RADIAN_COEF;
 
     // pitch (y-axis rotation)
-    fp32 sinp = 2.0f * (q[0] * q[2] - q[3] * q[1]);
+    const fp32 sinp = 2.0f * (q[0] * q[2] - q[3] * q[1]);
     if (fabs(sinp) >= 1)
         euler_angle[1] = copysignf(90.0f, sinp); // use 90 degrees if out of range
     else
         euler_angle[1] = asinf(sinp) * RADIAN_COEF;
 
-    // yaw (z-axis rotation)
-    fp32 siny_cosp = 2.0f * (q[0] * q[3] + q[1] * q[2]);
-    fp32 cosy_cosp = 1.0f - 2.0f * (q[2] * q[2] + q[3] * q[3]);
-    euler_angle[2] = atan2f(siny_cosp, cosy_cosp) * RADIAN_COEF;
+    // roll (x-axis rotation)
+    const fp32 sinr_cosp = 2.0f * (q[0] * q[1] + q[2] * q[3]);
+    const fp32 cosr_cosp = 1.0f - 2.0f * (q[1] * q[1] + q[2] * q[2]);
+    euler_angle[2] = atan2f(sinr_cosp, cosr_cosp) * RADIAN_COEF;
+}
+
+// 欧拉角转四元数 (角度制)
+void euler_to_quaternion(const fp32 euler_angle[3], fp32 q[4])
+{
+    if (euler_angle == NULL || q == NULL) return;
+
+    const fp32 yaw_rad = euler_angle[0] / RADIAN_COEF;
+    const fp32 pitch_rad = euler_angle[1] / RADIAN_COEF;
+    const fp32 roll_rad = euler_angle[2] / RADIAN_COEF;
+
+    const fp32 cy = cosf(yaw_rad * 0.5f);
+    const fp32 sy = sinf(yaw_rad * 0.5f);
+    const fp32 cp = cosf(pitch_rad * 0.5f);
+    const fp32 sp = sinf(pitch_rad * 0.5f);
+    const fp32 cr = cosf(roll_rad * 0.5f);
+    const fp32 sr = sinf(roll_rad * 0.5f);
+
+    q[0] = cr * cp * cy + sr * sp * sy;
+    q[1] = sr * cp * cy - cr * sp * sy;
+    q[2] = cr * sp * cy + sr * cp * sy;
+    q[3] = cr * cp * sy - sr * sp * cy;
 }

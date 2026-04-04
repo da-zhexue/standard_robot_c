@@ -8,11 +8,11 @@ void RemoteDataProcess_CAN(const uint8_t *data, void* arg);
 void dbus_init(rc_instance* rc_ins, const RC_MODE mode, CAN_HandleTypeDef* hcan)
 {
     memset(&rc_ins->rc_data, 0, sizeof(rc_data_t));
-    if (mode == RC_CHASSIS)
-        rc_ins->rc_data.mode = RC_CHASSIS;
-    else if (mode == RC_GIMBAL)
-        rc_ins->rc_data.mode = RC_GIMBAL;
-    if (rc_ins->rc_data.mode == RC_CHASSIS)
+    if (mode == RC_DIRECT)
+        rc_ins->rc_data.mode = RC_DIRECT;
+    else if (mode == RC_CAN)
+        rc_ins->rc_data.mode = RC_CAN;
+    if (rc_ins->rc_data.mode == RC_DIRECT)
         BSP_UART_Init(&rc_ins->dbus_usart, &DBUS_HUART, RemoteDataProcess_UART, NULL, 0, DBUS_MAX_LEN);
     else
     {

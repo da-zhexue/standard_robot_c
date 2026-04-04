@@ -147,4 +147,7 @@ uint16_t find_frame_headers(
 // 四元数转欧拉角 (角度制)
 void quaternion_to_euler(const fp32 q[4], fp32 euler_angle[3]);
 
+// 欧拉角转四元数 (角度制)
+void euler_to_quaternion(const fp32 euler_angle[3], fp32 q[4]);
+
 #endif

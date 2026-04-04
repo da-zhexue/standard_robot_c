@@ -7,7 +7,7 @@ typedef enum
 {
     CMD_ID_SELF_DECISION = 0x401,
     CMD_ID_CHASSIS_CTRL = 0x402,
-    CMD_ID_GIMBAL_CTRL = 0x403,
+    CMD_ID_BIG_GIMBAL_CTRL = 0x403,
 } nuc_cmd_id_t;
 
 typedef struct

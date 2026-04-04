@@ -33,6 +33,7 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
+
 )
 
 # Add STM32CubeMX generated sources
@@ -61,9 +62,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Module/motor/LK/MF9025/mf9025.c
         Module/DBUS/dbus.c
         Module/NUC/nuc.c
+        Module/NX/nx.c
         Module/Referee/referee.c
         Module/COMM/comm.c
         Module/COMM/CBoard_chassis.c
+        Module/COMM/CBoard_gimbal.c
         Module/IMU/BMI088/BMI088Middleware.c
         Module/IMU/BMI088/BMI088driver.c
         Module/IMU/EKF/kalman_filter.c
@@ -75,6 +78,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Module/LED/led.c
         APP/task_init.c
         APP/chassis.c
+        APP/gimbal.c
         APP/daemon.c
 )
 

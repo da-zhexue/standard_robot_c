@@ -40,7 +40,7 @@ static void chassis_send_referee_info(const chassis_t* chassis_ptr);
 void Chassis_Init(chassis_t* chassis_ptr)
 {
     DWT_Init(DWT_CLOCK_FREQ);
-    dbus_init(&chassis_ptr->rc, RC_CHASSIS, &hcan1);
+    dbus_init(&chassis_ptr->rc, RC_DIRECT, &hcan1);
     m3508_init(&chassis_ptr->m3508, &hcan1, M3508_TX_1, 4);
     mf9025_init(&chassis_ptr->mf9025, &hcan1, MF9025_TX_MIN);
     INS_Init(&chassis_ptr->ins);
@@ -62,7 +62,7 @@ void Chassis_Init(chassis_t* chassis_ptr)
 void Chassis_Task(const void* argument)
 {
     Chassis_Init(&chassis);
-    uint16_t ctrl_loop = 0;
+    static uint16_t ctrl_loop = 0;
     while(1)
     {
         if (ctrl_loop % 3 == 0) // 控制循环 300Hz左右

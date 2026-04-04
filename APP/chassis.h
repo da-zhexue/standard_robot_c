@@ -105,10 +105,5 @@ typedef struct
  */
 void Chassis_Task(const void* argument);
 
-/**
- * @brief 底盘初始化函数
- */
-void Chassis_Init(chassis_t* chassis_ptr);
-
 #endif //STANDARD_ROBOT_C_CHASSIS_H
 

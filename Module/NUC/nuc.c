@@ -52,7 +52,7 @@ void NucRxCallback(uint8_t* data, const uint16_t len)
                 case CMD_ID_CHASSIS_CTRL:
                     NUC_Chassis_Handler(&rx_data[7], data_length);
                     break;
-                case CMD_ID_GIMBAL_CTRL:
+                case CMD_ID_BIG_GIMBAL_CTRL:
                     NUC_Gimbal_Handler(&rx_data[7], data_length);
                      break;
                 default :
