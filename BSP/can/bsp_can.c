@@ -128,7 +128,7 @@ CAN_Status_t BSP_CAN_Transmit(const CAN_Instance_t *can_ins,
     }
 
     CAN_TxHeaderTypeDef tx_header;
-    uint32_t tx_mailbox;
+    uint32_t tx_mailbox = CAN_TX_MAILBOX0;
 
     /* 配置发送头 */
     tx_header.StdId = id_type == CAN_ID_STD ? can_id : 0;
@@ -138,6 +138,14 @@ CAN_Status_t BSP_CAN_Transmit(const CAN_Instance_t *can_ins,
     tx_header.DLC = dlc;
     tx_header.TransmitGlobalTime = DISABLE;
 
+    while (HAL_CAN_GetTxMailboxesFreeLevel(can_ins->handle) == 0) // 等待至少一个邮箱空闲
+        ;
+    if (can_ins->handle->Instance->TSR & CAN_TSR_TME0)
+        tx_mailbox = CAN_TX_MAILBOX0;
+    else if (can_ins->handle->Instance->TSR & CAN_TSR_TME1)
+        tx_mailbox = CAN_TX_MAILBOX1;
+    else if (can_ins->handle->Instance->TSR & CAN_TSR_TME2)
+        tx_mailbox = CAN_TX_MAILBOX2;
     /* 发送CAN消息 */
     if (HAL_CAN_AddTxMessage(can_ins->handle, &tx_header, data, &tx_mailbox) != HAL_OK) {
         return CAN_ERROR;
@@ -229,11 +237,10 @@ static CAN_Status_t CAN_ConfigureFilters(const CAN_Instance_t *can_ins)
     filter_config.FilterMaskIdLow = 0x0000;
     filter_config.FilterFIFOAssignment = CAN_RX_FIFO0;
     filter_config.FilterActivation = ENABLE;
-
-    if (can_ins->can_instance == 0) {
-        filter_config.SlaveStartFilterBank = 0;
-    } else {
-        filter_config.SlaveStartFilterBank = 13;
+		filter_config.SlaveStartFilterBank = 13;
+    if (can_ins->can_instance == 1) {
+				filter_config.FilterBank = 14;
+        filter_config.SlaveStartFilterBank = 14;
     }
 
     if (HAL_CAN_ConfigFilter(can_ins->handle, &filter_config) != HAL_OK) {

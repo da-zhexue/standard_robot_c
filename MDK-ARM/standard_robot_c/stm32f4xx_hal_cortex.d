@@ -28,6 +28,7 @@ standard_robot_c\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm
 standard_robot_c\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h
 standard_robot_c\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h
 standard_robot_c\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h
+standard_robot_c\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
 standard_robot_c\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 standard_robot_c\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 standard_robot_c\stm32f4xx_hal_cortex.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h

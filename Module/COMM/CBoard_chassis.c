@@ -33,16 +33,5 @@ void CBoard_IMU_handler(const uint8_t* data, void* arg)
     if (data == NULL || arg == NULL)
         return;
     fp32* imu_angle = (fp32*)arg;
-    const int16_t qx = (int16_t)(data[0] | (data[1] << 8));
-    const int16_t qy = (int16_t)(data[2] | (data[3] << 8));
-    const int16_t qz = (int16_t)(data[4] | (data[5] << 8));
-    const int16_t qw = (int16_t)(data[6] | (data[7] << 8));
-    // 将四元数转换为欧拉角（单位：度）
-    const float qx_f = (float)qx / 32768.0f;
-    const float qy_f = (float)qy / 32768.0f;
-    const float qz_f = (float)qz / 32768.0f;
-    const float qw_f = (float)qw / 32768.0f;
-
-    const fp32 q[4] = {qw_f, qx_f, qy_f, qz_f};
-    quaternion_to_euler(q, imu_angle);
+    unpack_4bytes_to_floats(&data[0], &imu_angle[0]);
 }

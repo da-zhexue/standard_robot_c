@@ -29,6 +29,7 @@ standard_robot_c\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash
 standard_robot_c\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h
 standard_robot_c\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h
 standard_robot_c\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h
+standard_robot_c\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
 standard_robot_c\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 standard_robot_c\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 standard_robot_c\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
@@ -51,6 +52,8 @@ standard_robot_c\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semp
 standard_robot_c\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
 standard_robot_c\main.o: ../Core/Inc/can.h
 standard_robot_c\main.o: ../Core/Inc/dma.h
+standard_robot_c\main.o: ../Core/Inc/spi.h
+standard_robot_c\main.o: ../Core/Inc/tim.h
 standard_robot_c\main.o: ../Core/Inc/usart.h
 standard_robot_c\main.o: ../USB_DEVICE/App/usb_device.h
 standard_robot_c\main.o: ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h

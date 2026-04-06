@@ -40,5 +40,6 @@ typedef struct
 
 GM6020_Status_t gm6020_init(gm6020_instance* gm6020_ins, CAN_HandleTypeDef *hcan, uint32_t txid, uint8_t num);
 GM6020_Status_t gm6020_ctrl_voltage(const gm6020_instance* gm6020_ins, int16_t voltage[4]);
+GM6020_Status_t gm6020_ctrl_current(const gm6020_instance* gm6020_ins, int16_t current[4]);
 
 #endif //STANDARD_ROBOT_C_GM6020_H

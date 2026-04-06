@@ -58,8 +58,6 @@ typedef struct
 // 底盘控制数据中心
 typedef struct
 {
-    uint8_t start; // 启动标志
-
     fp32 given_chassis_v[2]; // 给定底盘速度 [0]线速度大小 [1]线速度方向角度
     fp32 given_chassis_w; // 给定底盘自转角速度
     fp32 given_gimbal_l_yaw; // 给定大云台Yaw角度

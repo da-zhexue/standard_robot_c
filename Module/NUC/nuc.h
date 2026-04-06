@@ -22,5 +22,6 @@ typedef struct
 } nuc_ctrl_t;
 
 void NUC_Init(nuc_ctrl_t* nuc_ptr, UART_HandleTypeDef *nuc_uart);
+void NUC_Referee_Tran(const uint8_t* data, uint16_t len);
 
 #endif //STANDARD_ROBOT_C_NUC_H

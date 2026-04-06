@@ -29,6 +29,7 @@ standard_robot_c\bsp_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_f
 standard_robot_c\bsp_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h
 standard_robot_c\bsp_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h
 standard_robot_c\bsp_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h
+standard_robot_c\bsp_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
 standard_robot_c\bsp_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 standard_robot_c\bsp_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 standard_robot_c\bsp_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
@@ -50,3 +51,5 @@ standard_robot_c\bsp_uart.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/
 standard_robot_c\bsp_uart.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 standard_robot_c\bsp_uart.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
 standard_robot_c\bsp_uart.o: D:\keil5\ARM\ARMCC\Bin\..\include\string.h
+standard_robot_c\bsp_uart.o: ../Core/Inc/usart.h
+standard_robot_c\bsp_uart.o: ../Core/Inc/main.h

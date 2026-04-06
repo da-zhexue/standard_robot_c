@@ -97,7 +97,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
         ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING
-        CHASSIS
+        #CHASSIS
+        #GIMBAL
         OMNI
 )
 

@@ -14,23 +14,25 @@ const pid_config m3508_pid_config = {.mode = PID_POSITION, .kp = 8.0f, .ki = 0.0
 const pid_config mf9025_angle_pid_config = {.mode = PID_POSITION, .kp = 600.0f, .ki = 0.0f, .kd = 45000.0f, .max_out = 30000.0f, .max_iout = 3000.0f,
     .out_limit_delta_P = 10000.0f, .out_limit_delta_N = 40000.0f, .deadzone = 0.0f};
 const uint16_t mf9025_speed_pid_config[3] = {80, 10, 10};
-static chassis_t chassis;
+chassis_t chassis;
 
 // ---------- 内部静态函数声明 ----------
 static void chassis_filter_init(chassis_t* chassis_ptr);
 static void chassis_pid_init(chassis_t* chassis_ptr);
-//static uint8_t chassis_check_game_start(chassis_t* chassis_ptr);
+static uint8_t chassis_check_game_start(const chassis_t* chassis_ptr);
 static void chassis_switch_controller(chassis_t* chassis_ptr);
 static void chassis_calc_move_speed(chassis_t* chassis_ptr);
 static void chassis_calc_rotate_angle(chassis_t* chassis_ptr);
 static void chassis_calc_angle(chassis_t* chassis_ptr);
-static void chassis_calc_m3508_speed(chassis_t* chassis_ptr);
-static void chassis_calc_mf9025_angle(chassis_t* chassis_ptr);
-static void chassis_calc_pid_out(chassis_t* chassis_ptr);
+static void chassis_calc_wheelmotor_speed(chassis_t* chassis_ptr);
+static void chassis_calc_gimbalmotor_angle(chassis_t* chassis_ptr);
+static void chassis_calc_wheelmotor_pidout(chassis_t* chassis_ptr);
+static void chassis_calc_gimbalmotor_pidout(chassis_t* chassis_ptr);
 static void chassis_set_max_power(chassis_t* chassis_ptr);
 static void chassis_update_power_param(chassis_t* chassis_ptr);
 static void chassis_limit_power(chassis_t* chassis_ptr);
-static void chassis_send_can_cmd(const chassis_t* chassis_ptr);
+static void chassis_send_wheelmotor_cmd(const chassis_t* chassis_ptr);
+static void chassis_send_gimbalmotor_cmd(const chassis_t* chassis_ptr);
 static void chassis_send_referee_info(const chassis_t* chassis_ptr);
 
 /**
@@ -40,9 +42,11 @@ static void chassis_send_referee_info(const chassis_t* chassis_ptr);
 void Chassis_Init(chassis_t* chassis_ptr)
 {
     DWT_Init(DWT_CLOCK_FREQ);
-    dbus_init(&chassis_ptr->rc, RC_DIRECT, &hcan1);
+    dbus_init(&chassis_ptr->rc, RC_CAN, &hcan2);
+	mf9025_init(&chassis_ptr->mf9025, &hcan1, MF9025_TX_MIN);
+    mf9025_speed_init(&chassis_ptr->mf9025, mf9025_speed_pid_config);
     m3508_init(&chassis_ptr->m3508, &hcan1, M3508_TX_1, 4);
-    mf9025_init(&chassis_ptr->mf9025, &hcan1, MF9025_TX_MIN);
+    
     INS_Init(&chassis_ptr->ins);
     initPowerControllerConfig(&chassis_ptr->power_ctrl_config, M3508_TORQUE_CONST, M3508_CURRENT_LIMIT, M3508_OUTPUT_LIMIT,
         K1_CONST,  K2_CONST, K3_CONST, sentinelMaxPower[0]);
@@ -50,6 +54,7 @@ void Chassis_Init(chassis_t* chassis_ptr)
     super_cap_init(&chassis_ptr->super_cap, &hcan1);
     NUC_Init(&chassis_ptr->nuc_ctrl, &huart6);
     Referee_Init(&chassis_ptr->referee, &huart1);
+    CBoard_Chassis_Init(&chassis_ptr->cbord_chassis, &hcan2);
 
     memset(&chassis_ptr->ctrl, 0, sizeof(chassis_ptr->ctrl));
     chassis_filter_init(chassis_ptr);
@@ -65,37 +70,40 @@ void Chassis_Task(const void* argument)
     static uint16_t ctrl_loop = 0;
     while(1)
     {
+        osDelay(1);
+        // if (!chassis_check_game_start(&chassis)) continue;
         if (ctrl_loop % 3 == 0) // 控制循环 300Hz左右
         {
-            //if (chassis_check_game_start(&chassis)) continue;
-            chassis_switch_controller(&chassis);      // 切换控制源（遥控/上位机等）
 
-            // 运动学计算与航向更新
-            chassis_calc_move_speed(&chassis);        // 计算并过滤移动速度
-            chassis_calc_rotate_angle(&chassis);      // 计算云台旋转角度
-            chassis_calc_angle(&chassis);             // 计算绝对角度信息
-
-            // 控制闭环计算
-            chassis_calc_m3508_speed(&chassis);       // 解算底盘轮毂电机速度
-            chassis_calc_mf9025_angle(&chassis);      // 解算航向云台角度环
-
-            chassis_calc_pid_out(&chassis);           // 计算电机控制PID输出
-
-            // 功率控制策略
-            chassis_set_max_power(&chassis);          // 设置最大允许功率限制（包括超电策略）
-            //chassis_update_power_param(&chassis);   // 功率控制参数更新 (当前未使用)
-            //chassis_limit_power(&chassis);          // 功率分配控制算法 (当前未使用)
-
-            // 下发控制指令
-            chassis_send_can_cmd(&chassis);
+            chassis_switch_controller(&chassis);       // 切换控制源（遥控/上位机等）
+            chassis_calc_move_speed(&chassis);         // 计算并过滤移动速度
+            chassis_calc_wheelmotor_speed(&chassis);   // 解算底盘轮毂电机速度
+            chassis_calc_wheelmotor_pidout(&chassis);  // 计算电机控制PID输出
+            chassis_send_wheelmotor_cmd(&chassis);     // 下发3508控制指令
         }
+        else if (ctrl_loop % 3 == 1) // 云台控制循环 300Hz左右，和底盘控制错开，减少CAN总线冲突
+        {
+            chassis_switch_controller(&chassis);        // 切换控制源（遥控/上位机等）
+            chassis_calc_rotate_angle(&chassis);        // 计算云台旋转角度
+            chassis_calc_angle(&chassis);               // 计算绝对角度信息
+            chassis_calc_gimbalmotor_angle(&chassis);   // 解算航向云台角度环
+            chassis_calc_gimbalmotor_pidout(&chassis);  // 计算云台控制PID输出
+            chassis_send_gimbalmotor_cmd(&chassis);     // 下发9025控制指令
+        }
+        else
+        {
+            chassis_set_max_power(&chassis);            // 设置最大允许功率限制（包括超电策略）
+            //chassis_update_power_param(&chassis);     // 功率控制参数更新 (当前未使用)
+            //chassis_limit_power(&chassis);            // 功率分配控制算法 (当前未使用)
+        }
+
         if (ctrl_loop % 100 == 0) // 通信循环 10Hz左右
         {
             chassis_send_referee_info(&chassis); // 发送裁判系统信息到云台
         }
+
         ctrl_loop++;
         if (ctrl_loop > 3000) ctrl_loop = 0;
-        osDelay(1);
     }
 }
 
@@ -123,11 +131,10 @@ static void chassis_pid_init(chassis_t* chassis_ptr)
 /**
  * @brief 检查游戏是否开始 底盘由NUC控制时由NUC判断是否开始
  */
-// static uint8_t chassis_check_game_start(chassis_t* chassis_ptr)
-// {
-//     chassis_ptr->ctrl.start = chassis_ptr->comm.game_start;
-//     return chassis_ptr->ctrl.start;
-// }
+static uint8_t chassis_check_game_start(const chassis_t* chassis_ptr)
+{
+    return (chassis_ptr->referee.game_status.game_progress == 4);
+}
 
 /**
  * @brief 切换底盘控制器（通过遥控器S1拨杆）
@@ -244,7 +251,7 @@ static void chassis_calc_angle(chassis_t* chassis_ptr)
 }
 
 /**
- * @brief 麦克纳姆轮底盘运动学解算函数
+ * @brief 全向轮底盘运动学解算函数
  * @param vx x向速度 m/s
  * @param vy y向速度 m/s
  * @param vw 自转角速度 rad/s
@@ -267,7 +274,7 @@ void Omni_Kinematics_Resolve(const fp32 vx, const fp32 vy, const fp32 vw, const 
 /**
  * @brief 解算3508电机的目标速度（给四个轮毂下发指令速度）
  */
-static void chassis_calc_m3508_speed(chassis_t* chassis_ptr)
+static void chassis_calc_wheelmotor_speed(chassis_t* chassis_ptr)
 {
     const fp32 chassis_v = chassis_ptr->ctrl.given_chassis_v[0];
     const fp32 theta = chassis_ptr->ctrl.given_chassis_v[1];
@@ -279,7 +286,6 @@ static void chassis_calc_m3508_speed(chassis_t* chassis_ptr)
     Omni_Kinematics_Resolve(vx, vy, chassis_w, chassis_ptr->chassis_angle.yaw_rad, motor_speeds);
 #endif
 
-
     chassis_ptr->ctrl.m3508_controller[0].given_speed = motor_speeds[0];
     chassis_ptr->ctrl.m3508_controller[1].given_speed = motor_speeds[1];
     chassis_ptr->ctrl.m3508_controller[2].given_speed = motor_speeds[2];
@@ -289,7 +295,7 @@ static void chassis_calc_m3508_speed(chassis_t* chassis_ptr)
 /**
  * @brief 解算MF9025航向电机角度及前馈量
  */
-static void chassis_calc_mf9025_angle(chassis_t* chassis_ptr)
+static void chassis_calc_gimbalmotor_angle(chassis_t* chassis_ptr)
 {
     INS_Update(&chassis_ptr->ins);
     chassis_ptr->ctrl.m9025_controller.given_angle = chassis_ptr->ctrl.given_gimbal_l_yaw;
@@ -299,13 +305,16 @@ static void chassis_calc_mf9025_angle(chassis_t* chassis_ptr)
 /**
  * @brief PID控制律计算，包括3508速度环的PID计算和MF9025航向角度环的PID计算
  */
-static void chassis_calc_pid_out(chassis_t* chassis_ptr)
+static void chassis_calc_wheelmotor_pidout(chassis_t* chassis_ptr)
 {
     for (int i = 0; i < 4; i++)
     {
         PID_calc(&chassis_ptr->ctrl.m3508_controller[i].pid, chassis_ptr->m3508.ecd[i].speed, chassis_ptr->ctrl.m3508_controller[i].given_speed);
         chassis_ptr->ctrl.m3508_controller[i].out = chassis_ptr->ctrl.m3508_controller[i].pid.out[0];
     }
+}
+static void chassis_calc_gimbalmotor_pidout(chassis_t* chassis_ptr)
+{
     PID_calc(&chassis_ptr->ctrl.m9025_controller.pid, -chassis_ptr->gimbal_angle.yaw_total_angle, chassis_ptr->ctrl.m9025_controller.given_angle);
 }
 
@@ -393,16 +402,18 @@ static void chassis_limit_power(chassis_t* chassis_ptr)
 /**
  * @brief 将控制计算结果下发到CAN总线上
  */
-static void chassis_send_can_cmd(const chassis_t* chassis_ptr)
+static void chassis_send_wheelmotor_cmd(const chassis_t* chassis_ptr)
 {
     int16_t m3508_iq[4];
     for (int i = 0; i < 4; i++)
         m3508_iq[i] = (int16_t)chassis_ptr->ctrl.m3508_controller[i].out;
-    const int32_t mf9025_speed_out = (int32_t)(chassis_ptr->ctrl.m9025_controller.pid.out[0] + chassis_ptr->ctrl.m9025_controller.ff_speed);
     m3508_ctrl(&chassis_ptr->m3508, m3508_iq);
+}
+static void chassis_send_gimbalmotor_cmd(const chassis_t* chassis_ptr)
+{
+    const int32_t mf9025_speed_out = (int32_t)(chassis_ptr->ctrl.m9025_controller.pid.out[0] + chassis_ptr->ctrl.m9025_controller.ff_speed);
     mf9025_ctrl_speed(&chassis_ptr->mf9025, MF9025_MAX_IQ, mf9025_speed_out);
 }
-
 
 static void chassis_send_referee_info(const chassis_t* chassis_ptr)
 {

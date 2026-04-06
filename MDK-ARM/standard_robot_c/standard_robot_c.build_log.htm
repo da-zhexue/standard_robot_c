@@ -21,17 +21,104 @@ Target DLL:      CMSIS_AGDI.dll V1.32.0.0
 Dialog DLL:      TCM.DLL V1.36.5.0
  
 <h2>Project:</h2>
-E:\stm32\standard_robot_c\MDK-ARM\standard_robot_c.uvprojx
-Project File Date:  03/14/2026
+E:\Download\RM\sentry\MDK-ARM\standard_robot_c.uvprojx
+Project File Date:  04/05/2026
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target 'standard_robot_c'
-compiling usart.c...
+compiling task_init.c...
+..\APP\task_init.h(4): warning:  #1295-D: Deprecated declaration task_init - give arg types
+  void task_init();
+..\APP\task_init.h(6): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_TASK_INIT_H
+../BSP/can/bsp_can.h(66): warning:  #1-D: last line of file ends without a newline
+  #endif /* BSP_CAN_H */
+../Module/motor/DJI/M3508/m3508.h(42): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_M3508_H
+../Module/motor/LK/MF9025/mf9025.h(63): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_MF9025_H
+../BSP/usart/bsp_uart.h(55): warning:  #1-D: last line of file ends without a newline
+  #endif /* BSP_UART_H */
+../Module/DBUS/dbus.h(57): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_DBUS_H
+../Module/Power_Ctrl/power_ctrl.h(59): warning:  #1-D: last line of file ends without a newline
+  #endif //NEW_CHASSIS_POWER_CTRL_H
+../BSP/algorithm/rls.h(106): warning:  #1-D: last line of file ends without a newline
+  #endif //NEW_CHASSIS_RLS_H
+../Module/Power_Ctrl/power_ctrl_param_get.h(30): warning:  #1-D: last line of file ends without a newline
+  #endif //NEW_CHASSIS_POWER_CTRL_PARAM_GET_H
+../Module/Super_Cap/super_cap.h(29): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_SUPER_CAP_H
+../Module/NUC/nuc.h(26): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_NUC_H
+../Module/COMM/CBoard_chassis.h(22): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_CBOARD_CHASSIS_H
+../Module/motor/DJI/GM6020/gm6020.h(45): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_GM6020_H
+../Module/motor/DJI/M2006/m2006.h(42): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_M2006_H
+../Module/COMM/CBoard_gimbal.h(27): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_CBOARD_GIMBAL_H
+../Module/NX/nx.h(24): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_NX_H
+../Module/IMU/HI12/hi12.h(32): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_HI12_H
+..\APP\gimbal.h(85): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_GIMBAL_H
+../Module/LED/led.h(16): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_LED_H
+..\APP\daemon.h(13): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_DAEMON_H
+..\APP\robot_config.h(21): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_ROBOT_CONFIG_H
+..\APP\task_init.c(25): warning:  #1-D: last line of file ends without a newline
+  }
+..\APP\task_init.c: 23 warnings, 0 errors
+compiling ins.c...
+../Module/IMU/EKF/QuaternionEKF.h(73): warning:  #1295-D: Deprecated declaration Get_QEKF_INS - give arg types
+  QEKF_INS_t* Get_QEKF_INS();
+../APP/robot_config.h(21): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_ROBOT_CONFIG_H
+..\Module\IMU\INS\ins.c(134): warning:  #1-D: last line of file ends without a newline
+  }
+..\Module\IMU\INS\ins.c: 3 warnings, 0 errors
+compiling chassis.c...
+../BSP/can/bsp_can.h(66): warning:  #1-D: last line of file ends without a newline
+  #endif /* BSP_CAN_H */
+../Module/motor/DJI/M3508/m3508.h(42): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_M3508_H
+../Module/motor/LK/MF9025/mf9025.h(63): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_MF9025_H
+../BSP/usart/bsp_uart.h(55): warning:  #1-D: last line of file ends without a newline
+  #endif /* BSP_UART_H */
+../Module/DBUS/dbus.h(57): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_DBUS_H
+../Module/Power_Ctrl/power_ctrl.h(59): warning:  #1-D: last line of file ends without a newline
+  #endif //NEW_CHASSIS_POWER_CTRL_H
+../BSP/algorithm/rls.h(106): warning:  #1-D: last line of file ends without a newline
+  #endif //NEW_CHASSIS_RLS_H
+../Module/Power_Ctrl/power_ctrl_param_get.h(30): warning:  #1-D: last line of file ends without a newline
+  #endif //NEW_CHASSIS_POWER_CTRL_PARAM_GET_H
+../Module/Super_Cap/super_cap.h(29): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_SUPER_CAP_H
+../Module/NUC/nuc.h(26): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_NUC_H
+../Module/COMM/CBoard_chassis.h(22): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_CBOARD_CHASSIS_H
+..\APP\robot_config.h(21): warning:  #1-D: last line of file ends without a newline
+  #endif //STANDARD_ROBOT_C_ROBOT_CONFIG_H
+..\APP\chassis.c(142): warning:  #188-D: enumerated type mixed with another type
+      chassis_ptr->ctrl.chassis_controller = chassis_ptr->rc.rc_data.s1;
+..\APP\chassis.c(350): warning:  #177-D: function "chassis_update_power_param"  was declared but never referenced
+  static void chassis_update_power_param(chassis_t* chassis_ptr)
+..\APP\chassis.c(377): warning:  #177-D: function "chassis_limit_power"  was declared but never referenced
+  static void chassis_limit_power(chassis_t* chassis_ptr)
+..\APP\chassis.c: 15 warnings, 0 errors
 linking...
-Program Size: Code=28052 RO-data=1356 RW-data=396 ZI-data=41252  
+Program Size: Code=47724 RO-data=1500 RW-data=612 ZI-data=44100  
 FromELF: creating hex file...
-"standard_robot_c\standard_robot_c.axf" - 0 Error(s), 0 Warning(s).
+"standard_robot_c\standard_robot_c.axf" - 0 Error(s), 41 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -54,7 +141,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.3.0
-Build Time Elapsed:  00:00:03
+Build Time Elapsed:  00:00:08
 </pre>
 </body>
 </html>

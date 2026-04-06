@@ -86,3 +86,13 @@ void NUC_Gimbal_Handler(const uint8_t* data, const uint16_t len)
 
     unpack_4bytes_to_floats(&data[0], &nuc_ins->gimbal_yaw);
 }
+
+void NUC_Referee_Tran(const uint8_t* data, const uint16_t len)
+{
+    if (nuc_ins == NULL)
+        return;
+    if (len < 5)
+        return;
+
+    BSP_UART_Transmit_To_Mail(&nuc_ins->nuc_uart, data, len, 100);
+}

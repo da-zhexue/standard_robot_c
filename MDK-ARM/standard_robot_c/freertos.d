@@ -38,6 +38,7 @@ standard_robot_c\freertos.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_f
 standard_robot_c\freertos.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h
 standard_robot_c\freertos.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h
 standard_robot_c\freertos.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h
+standard_robot_c\freertos.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
 standard_robot_c\freertos.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 standard_robot_c\freertos.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 standard_robot_c\freertos.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
@@ -49,4 +50,4 @@ standard_robot_c\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/
 standard_robot_c\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
 standard_robot_c\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 standard_robot_c\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
-standard_robot_c\freertos.o: ..\APP\task_init.h
+standard_robot_c\freertos.o: ../APP/task_init.h

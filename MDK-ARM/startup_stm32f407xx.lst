@@ -855,11 +855,11 @@ y -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_P
 arty/FreeRTOS/Source/CMSIS_RTOS -I../Middlewares/Third_Party/FreeRTOS/Source/po
 rtable/RVDS/ARM_CM4F -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I..
 /Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Devic
-e/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -I.\RTE\_standard_robot_c -IE
-:\keil\ARM\CMSIS\5.6.0\CMSIS\Core\Include -IE:\keil\Keil\STM32F4xx_DFP\2.15.0\D
-rivers\CMSIS\Device\ST\STM32F4xx\Include --predefine="__UVISION_VERSION SETA 52
-9" --predefine="_RTE_ SETA 1" --predefine="STM32F407xx SETA 1" --list=startup_s
-tm32f407xx.lst startup_stm32f407xx.s
+e/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/I
+nc -I.\RTE\_standard_robot_c -IE:\keil\ARM\CMSIS\5.6.0\CMSIS\Core\Include -IE:\
+keil\Keil\STM32F4xx_DFP\2.15.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include --pred
+efine="__UVISION_VERSION SETA 529" --predefine="_RTE_ SETA 1" --predefine="STM3
+2F407xx SETA 1" --list=startup_stm32f407xx.lst startup_stm32f407xx.s
 
 
 

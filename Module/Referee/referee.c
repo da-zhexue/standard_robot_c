@@ -2,6 +2,7 @@
 #include <string.h>
 #include "crc.h"
 #include "usart.h"
+#include "NUC/nuc.h"
 
 static referee_t* referee_ins;
 
@@ -19,7 +20,7 @@ void Referee_RxCallback(uint8_t* data, const uint16_t len)
 {
     for (int i = 0; i < len; i++)
     {
-        if (data[i] == 0xA5 && i+4+2<len-1)
+        if (data[i] == 0xA5 && i+7<len)
         {
             uint8_t *rx_data = &data[i];
             if (!Verify_CRC8_Check_Sum(rx_data, 5))
@@ -104,7 +105,7 @@ void Referee_RxCallback(uint8_t* data, const uint16_t len)
             default :
                 break;
             }
-
+            NUC_Referee_Tran(rx_data, data_length + 9);
         }
     }
 }

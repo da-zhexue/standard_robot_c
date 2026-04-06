@@ -2,16 +2,16 @@
 #include "can.h"
 #include "usart.h"
 
-const pid_config yaw_pid_config = {.mode = PID_POSITION, .kp = 50.0f, .ki = 0.0f, .kd = 10.0f, .max_out = 16000.0f, .max_iout = 3000.0f,
+const pid_config yaw_pid_config = {.mode = PID_POSITION, .kp = 500.0f, .ki = 0.0f, .kd = 10.0f, .max_out = 25000.0f, .max_iout = 3000.0f,
     .out_limit_delta_P = 1000.0f, .out_limit_delta_N = 4000.0f, .deadzone = 0.0f};
-const pid_config pitch_pid_config = {.mode = PID_POSITION, .kp = 22.0f, .ki = 0.0f, .kd = 200.0f, .max_out = 16000.0f, .max_iout = 3000.0f,
+const pid_config pitch_pid_config = {.mode = PID_POSITION, .kp = 500.0f, .ki = 0.0f, .kd = 200.0f, .max_out = 25000.0f, .max_iout = 3000.0f,
     .out_limit_delta_P = 1000.0f, .out_limit_delta_N = 4000.0f, .deadzone = 0.0f};
 const pid_config friction_pid_config = {.mode = PID_POSITION, .kp = 8.0f, .ki = 0.0f, .kd = 0.0f, .max_out = 16000.0f, .max_iout = 3000.0f,
     .out_limit_delta_P = 1000.0f, .out_limit_delta_N = 4000.0f, .deadzone = 0.0f};
 const pid_config trigger_pid_config = {.mode = PID_POSITION, .kp = 8.0f, .ki = 0.0f, .kd = 0.0f, .max_out = 16000.0f, .max_iout = 3000.0f,
     .out_limit_delta_P = 1000.0f, .out_limit_delta_N = 4000.0f, .deadzone = 0.0f};
 
-static gimbal_t gimbal;
+gimbal_t gimbal;
 
 // ---------- 内部静态函数声明 ----------
 static void gimbal_pid_init(gimbal_t* gimbal_ptr);
@@ -20,8 +20,12 @@ static void gimbal_switch_controller(gimbal_t* gimbal_ptr);
 static void gimbal_calc_target_angle(gimbal_t* gimbal_ptr);
 static void gimbal_calc_current_angle(gimbal_t* gimbal_ptr);
 static void gimbal_fire_confirm(gimbal_t* gimbal_ptr);
-static void gimbal_calc_pid_out(gimbal_t* gimbal_ptr);
-static void gimbal_send_can_cmd(const gimbal_t* gimbal_ptr);
+static void gimbal_calc_rotate_pidout(gimbal_t* gimbal_ptr);
+static void gimbal_calc_friction_pidout(gimbal_t* gimbal_ptr);
+static void gimbal_calc_trigger_pidout(gimbal_t* gimbal_ptr);
+static void gimbal_send_friction_cmd(const gimbal_t* gimbal_ptr);
+static void gimbal_send_trigger_cmd(const gimbal_t* gimbal_ptr);
+static void gimbal_send_rotate_cmd(const gimbal_t* gimbal_ptr);
 static void gimbal_send_rc(const gimbal_t* gimbal_ptr);
 static void gimbal_send_angle(const gimbal_t* gimbal_ptr);
 
@@ -47,25 +51,35 @@ void Gimbal_Task(const void* argument)
     static uint16_t ctrl_loop = 0;
     while(1)
     {
+        osDelay(1);
+        //if (!gimbal_check_game_start(&gimbal)) continue;
+        gimbal_switch_controller(&gimbal);
         if (ctrl_loop % 3 == 0) // 控制循环 300Hz左右
         {
-            //if (!gimbal_check_game_start(&gimbal)) continue;
-            gimbal_switch_controller(&gimbal);
             gimbal_calc_target_angle(&gimbal);
             gimbal_calc_current_angle(&gimbal);
-            gimbal_fire_confirm(&gimbal);
-            gimbal_calc_pid_out(&gimbal);
-            gimbal_send_can_cmd(&gimbal);
+            gimbal_calc_rotate_pidout(&gimbal);
+            gimbal_send_rotate_cmd(&gimbal);
         }
-        if (ctrl_loop % 5 == 0) // 通信循环 200Hz左右
+        else if (ctrl_loop % 3 == 1)
         {
-            gimbal_send_rc(&gimbal);
-            gimbal_send_angle(&gimbal);
+            gimbal_calc_friction_pidout(&gimbal);
+            gimbal_send_friction_cmd(&gimbal);
         }
+        else
+        {
+            gimbal_fire_confirm(&gimbal);
+            gimbal_calc_trigger_pidout(&gimbal);
+            gimbal_send_trigger_cmd(&gimbal);
+        }
+
+        if (ctrl_loop % 5 == 0) // 通信循环 200Hz左右
+            gimbal_send_rc(&gimbal);
+        else if (ctrl_loop % 5 == 1)
+            gimbal_send_angle(&gimbal);
+
         ctrl_loop++;
         if (ctrl_loop > 3000) ctrl_loop = 0;
-        osDelay(1);
-
     }
 }
 
@@ -119,60 +133,76 @@ static void gimbal_calc_target_angle(gimbal_t* gimbal_ptr)
 
 static void gimbal_calc_current_angle(gimbal_t* gimbal_ptr)
 {
-    const int yaw_ecd = gimbal_ptr->angle_motor.ecd[0].ecd - ECD_YAW_OFFSET;
-    const int pitch_ecd = gimbal_ptr->angle_motor.ecd[1].ecd - ECD_PITCH_OFFSET;
-
-    gimbal_ptr->angle.yaw_deg = theta_format((fp32)yaw_ecd * 360.0f / 8192.0f);
-    gimbal_ptr->angle.pitch_deg = theta_format((fp32)pitch_ecd * 360.0f / 8192.0f);
+    const int pitch_ecd = gimbal_ptr->angle_motor.ecd[0].ecd;
+    const int yaw_ecd = gimbal_ptr->angle_motor.ecd[1].ecd;
+    
+    gimbal_ptr->angle.yaw_deg = theta_format(((fp32)yaw_ecd * 360.0f / 8192.0f) - ECD_YAW_OFFSET);
+    gimbal_ptr->angle.pitch_deg = theta_format(((fp32)pitch_ecd * 360.0f / 8192.0f) - ECD_PITCH_OFFSET);
 }
 
 static void gimbal_fire_confirm(gimbal_t* gimbal_ptr)
 {
-    if (gimbal_ptr->ctrl.open_friction
+    gimbal_ptr->ctrl.friction_ready = 1;
+    if (!(gimbal_ptr->ctrl.open_friction
         && gimbal_ptr->friction_motor.ecd[0].speed > FRICTION_READY_SPEED
-        && gimbal_ptr->friction_motor.ecd[1].speed < -FRICTION_READY_SPEED )
-        // && gimbal_ptr->cbord_gimbal.bullet_allow > 0
-        // && gimbal_ptr->cbord_gimbal.shoot_heat < 140)
-        gimbal_ptr->ctrl.friction_ready = 1;
-    else
+        && gimbal_ptr->friction_motor.ecd[1].speed < -FRICTION_READY_SPEED ))
         gimbal_ptr->ctrl.friction_ready = 0;
+    // if (!(gimbal_ptr->cboard_gimbal.bullet_allow > 0 && gimbal_ptr->cboard_gimbal.shoot_heat < 140))
+    //     gimbal_ptr->ctrl.friction_ready = 0;
 }
 
-static void gimbal_calc_pid_out(gimbal_t* gimbal_ptr)
+static void gimbal_calc_rotate_pidout(gimbal_t* gimbal_ptr)
 {
-
-    PID_calc(&gimbal_ptr->ctrl.angle_ctrl[0].pid, gimbal_ptr->angle.yaw_deg, gimbal_ptr->ctrl.target_yaw);
+    PID_calc(&gimbal_ptr->ctrl.angle_ctrl[0].pid, gimbal_ptr->angle.pitch_deg, gimbal_ptr->ctrl.target_pitch);
     gimbal_ptr->ctrl.angle_ctrl[0].out = gimbal_ptr->ctrl.angle_ctrl[0].pid.out[0];
-    PID_calc(&gimbal_ptr->ctrl.angle_ctrl[1].pid, gimbal_ptr->angle.pitch_deg, gimbal_ptr->ctrl.target_pitch);
+    PID_calc(&gimbal_ptr->ctrl.angle_ctrl[1].pid, gimbal_ptr->angle.yaw_deg, gimbal_ptr->ctrl.target_yaw);
     gimbal_ptr->ctrl.angle_ctrl[1].out = gimbal_ptr->ctrl.angle_ctrl[1].pid.out[0];
-    PID_calc(&gimbal_ptr->ctrl.friction_ctrl[0].pid, gimbal_ptr->friction_motor.ecd[0].speed, (gimbal_ptr->ctrl.open_friction) ? FRICTION_SPEED_MAX : 0.0f);
-    gimbal_ptr->ctrl.friction_ctrl[0].out = gimbal_ptr->ctrl.friction_ctrl[0].pid.out[0];
-    PID_calc(&gimbal_ptr->ctrl.friction_ctrl[1].pid, gimbal_ptr->friction_motor.ecd[1].speed, (gimbal_ptr->ctrl.open_friction) ? -FRICTION_SPEED_MAX : 0.0f);
-    gimbal_ptr->ctrl.friction_ctrl[1].out = gimbal_ptr->ctrl.friction_ctrl[1].pid.out[0];
+}
+static void gimbal_calc_friction_pidout(gimbal_t* gimbal_ptr)
+{
+    gimbal_ptr->ctrl.friction_ctrl[0].given_speed = (gimbal_ptr->ctrl.open_friction) ? FRICTION_SPEED_MAX : 0;
+    gimbal_ptr->ctrl.friction_ctrl[1].given_speed = (gimbal_ptr->ctrl.open_friction) ? -FRICTION_SPEED_MAX : 0;
 
-    if (gimbal_ptr->ctrl.friction_ready)
-    {
-        PID_calc(&gimbal_ptr->ctrl.trigger_ctrl.pid, gimbal_ptr->trigger_motor.ecd[0].speed, (gimbal_ptr->ctrl.fire) ? TRIGGER_SPEED_MAX : 0.0f);
-        gimbal_ptr->ctrl.trigger_ctrl.out = gimbal_ptr->ctrl.trigger_ctrl.pid.out[0];
-    }
+    PID_calc(&gimbal_ptr->ctrl.friction_ctrl[0].pid, gimbal_ptr->friction_motor.ecd[0].speed, gimbal_ptr->ctrl.friction_ctrl[0].given_speed);
+    PID_calc(&gimbal_ptr->ctrl.friction_ctrl[1].pid, gimbal_ptr->friction_motor.ecd[1].speed, gimbal_ptr->ctrl.friction_ctrl[1].given_speed);
+
+    gimbal_ptr->ctrl.friction_ctrl[0].out = gimbal_ptr->ctrl.friction_ctrl[0].pid.out[0];
+    gimbal_ptr->ctrl.friction_ctrl[1].out = gimbal_ptr->ctrl.friction_ctrl[1].pid.out[0];
+}
+static void gimbal_calc_trigger_pidout(gimbal_t* gimbal_ptr)
+{
+    gimbal_ptr->ctrl.trigger_ctrl.given_speed = (gimbal_ptr->ctrl.fire && gimbal_ptr->ctrl.friction_ready) ? TRIGGER_SPEED_MAX : 0;
+    PID_calc(&gimbal_ptr->ctrl.trigger_ctrl.pid, gimbal_ptr->trigger_motor.ecd[0].speed, gimbal_ptr->ctrl.trigger_ctrl.given_speed);
+    gimbal_ptr->ctrl.trigger_ctrl.out = gimbal_ptr->ctrl.trigger_ctrl.pid.out[0];
 }
 
-static void gimbal_send_can_cmd(const gimbal_t* gimbal_ptr)
+static void gimbal_send_friction_cmd(const gimbal_t* gimbal_ptr)
 {
-    int16_t m3508_iq[4], gm6020_v[4], m2006_iq[4];
+    int16_t m3508_iq[4];
     m3508_iq[0] = (int16_t)gimbal_ptr->ctrl.friction_ctrl[0].out;
     m3508_iq[1] = (int16_t)gimbal_ptr->ctrl.friction_ctrl[1].out;
     m3508_iq[2] = 0; m3508_iq[3] = 0;
+
+    m3508_ctrl(&gimbal_ptr->friction_motor, m3508_iq);
+}
+static void gimbal_send_rotate_cmd(const gimbal_t* gimbal_ptr)
+{
+    int16_t gm6020_v[4];
 
     gm6020_v[0] = (int16_t)gimbal_ptr->ctrl.angle_ctrl[0].out;
     gm6020_v[1] = (int16_t)gimbal_ptr->ctrl.angle_ctrl[1].out;
     gm6020_v[2] = 0; gm6020_v[3] = 0;
 
+    gm6020_ctrl_voltage(&gimbal_ptr->angle_motor, gm6020_v);
+}
+
+static void gimbal_send_trigger_cmd(const gimbal_t* gimbal_ptr)
+{
+    int16_t m2006_iq[4];
+
     m2006_iq[0] = (int16_t)gimbal_ptr->ctrl.trigger_ctrl.out;
     m2006_iq[1] = 0; m2006_iq[2] = 0; m2006_iq[3] = 0;
 
-    m3508_ctrl(&gimbal_ptr->friction_motor, m3508_iq);
-    gm6020_ctrl_voltage(&gimbal_ptr->angle_motor, gm6020_v);
     m2006_ctrl(&gimbal_ptr->trigger_motor, m2006_iq);
 }
 

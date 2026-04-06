@@ -7,7 +7,7 @@
 #define MF9025_TX_MAX 0x160
 
 #define MF9025_ECD_MAX 65535
-#define MF9025_ECD_IN_ZERO 0xE07D
+#define MF9025_ECD_IN_ZERO 0x4520
 
 #define MF9025_MAX_IQ 2048
 
@@ -57,7 +57,9 @@ typedef struct
 }mf9025_instance;
 
 MF9025_Status_t mf9025_init(mf9025_instance* mf9025_ins, CAN_HandleTypeDef *hcan, uint32_t txid);
+void mf9025_speed_init(const mf9025_instance* mf9025_ins, const uint16_t pid_v[3]);
 MF9025_Status_t mf9025_ctrl_speed(const mf9025_instance* mf9025_ins, uint16_t iqControl, uint32_t speedControl);
 MF9025_Status_t mf9025_set_pid(const mf9025_instance* mf9025_ins, uint8_t param, uint16_t kp, uint16_t ki, uint16_t kd);
+MF9025_Status_t mf9025_get_measure(const mf9025_instance* mf9025_ins);
 
 #endif //STANDARD_ROBOT_C_MF9025_H
