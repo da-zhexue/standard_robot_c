@@ -1,7 +1,7 @@
 #include "m2006.h"
 #include "user_lib.h"
 
-void get_m2006_measure(const uint8_t* rx_data, void* arg);
+void get_m2006_measure(const uint8_t* rx_data, uint32_t id, void* arg);
 M2006_Status_t m2006_init(m2006_instance* m2006_ins, CAN_HandleTypeDef *hcan, const uint32_t txid, const uint8_t num)
 {
     if (num > M2006_MAXNUM)
@@ -15,12 +15,12 @@ M2006_Status_t m2006_init(m2006_instance* m2006_ins, CAN_HandleTypeDef *hcan, co
         if (txid == M2006_TX_1)
             for (uint8_t i = 0; i < num; i++)
             {
-                BSP_CAN_RegisterCallback(m2006_ins->can_ins, M2006_RX_1+i, CAN_ID_STD, get_m2006_measure, &m2006_ins->ecd[i]);
+                BSP_CAN_RegisterStdCallback(m2006_ins->can_ins, M2006_RX_1+i, get_m2006_measure, &m2006_ins->ecd[i]);
             }
         else
             for (uint8_t i = 0; i < num; i++)
             {
-                BSP_CAN_RegisterCallback(m2006_ins->can_ins, M2006_RX_2+i, CAN_ID_STD, get_m2006_measure, &m2006_ins->ecd[i]);
+                BSP_CAN_RegisterStdCallback(m2006_ins->can_ins, M2006_RX_2+i, get_m2006_measure, &m2006_ins->ecd[i]);
             }
 
         return M2006_OK;
@@ -48,7 +48,7 @@ M2006_Status_t m2006_ctrl(const m2006_instance* m2006_ins, int16_t current[4])
     return M2006_OK;
 }
 
-void get_m2006_measure(const uint8_t* rx_data, void* arg)
+void get_m2006_measure(const uint8_t* rx_data, uint32_t id, void* arg)
 {
     if(rx_data == NULL || arg == NULL)
         return;

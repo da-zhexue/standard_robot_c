@@ -2,25 +2,7 @@
 #include "user_lib.h"
 #include <string.h>
 
-
-static void dm8009p_can_rx_callback(const uint8_t *rx_data, void *arg)
-{
-    if (rx_data == NULL || arg == NULL)
-        return;
-
-    dm8009p_instance_t *ins = (dm8009p_instance_t *)arg;
-    dm8009p_ecd_t *fb = &ins->ecd;
-
-    fb->err = (rx_data[1] >> 4) & 0x0F;       
-    fb->pos_raw = (uint16_t)(rx_data[2] << 8) | rx_data[3];
-    fb->vel_raw = (int16_t)(((rx_data[4] << 4) | (rx_data[5] >> 4)) & 0x0FFF);
-    if (fb->vel_raw & 0x0800) fb->vel_raw |= 0xF000; 
-    fb->tor_raw = (int16_t)(((rx_data[5] & 0x0F) << 8) | rx_data[6]);
-    if (fb->tor_raw & 0x0800) fb->tor_raw |= 0xF000;
-    fb->mos_temp = rx_data[7];
-    fb->rotor_temp = 0;
-}
-
+static void dm8009p_can_rx_callback(const uint8_t *rx_data, uint32_t id, void *arg);
 DM8009P_Status_t dm8009p_init(dm8009p_instance_t *ins, CAN_HandleTypeDef *hcan, const uint8_t motor_id)
 {
     if (ins == NULL || hcan == NULL || motor_id == 0 || motor_id > 63)
@@ -34,10 +16,28 @@ DM8009P_Status_t dm8009p_init(dm8009p_instance_t *ins, CAN_HandleTypeDef *hcan, 
     ins->mode = DM8009P_MODE_MIT; 
     memset(&ins->ecd, 0, sizeof(ins->ecd));
 
-    if (BSP_CAN_RegisterCallback(ins->can_ins, motor_id, CAN_ID_STD, dm8009p_can_rx_callback, ins) != CAN_OK)
+    if (BSP_CAN_RegisterStdCallback(ins->can_ins, motor_id, dm8009p_can_rx_callback, ins) != CAN_OK)
         return DM8009P_ERROR_NOT_INIT;
 
     return DM8009P_OK;
+}
+
+static void dm8009p_can_rx_callback(const uint8_t *rx_data, uint32_t id, void *arg)
+{
+    if (rx_data == NULL || arg == NULL)
+        return;
+
+    dm8009p_instance_t *ins = (dm8009p_instance_t *)arg;
+    dm8009p_ecd_t *fb = &ins->ecd;
+
+    fb->err = (rx_data[1] >> 4) & 0x0F;
+    fb->pos_raw = (uint16_t)(rx_data[2] << 8) | rx_data[3];
+    fb->vel_raw = (int16_t)(((rx_data[4] << 4) | (rx_data[5] >> 4)) & 0x0FFF);
+    if (fb->vel_raw & 0x0800) fb->vel_raw |= 0xF000;
+    fb->tor_raw = (int16_t)(((rx_data[5] & 0x0F) << 8) | rx_data[6]);
+    if (fb->tor_raw & 0x0800) fb->tor_raw |= 0xF000;
+    fb->mos_temp = rx_data[7];
+    fb->rotor_temp = 0;
 }
 
 DM8009P_Status_t dm8009p_set_mode(dm8009p_instance_t *ins, const DM8009P_Mode_t mode)
@@ -109,7 +109,7 @@ DM8009P_Status_t dm8009p_ctrl_vel(const dm8009p_instance_t *ins, const float v_d
     memcpy(txdata, &v_des, 4);
     memset(txdata + 4, 0, 4);
 
-    uint32_t tx_id = DM8009P_VEL_BASE_ID + ins->motor_id;
+    const uint32_t tx_id = DM8009P_VEL_BASE_ID + ins->motor_id;
     if (BSP_CAN_Transmit(ins->can_ins, tx_id, CAN_ID_STD, txdata, 8) != CAN_OK)
         return DM8009P_ERROR_CAN_TX;
 

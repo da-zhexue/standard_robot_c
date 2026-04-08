@@ -28,7 +28,7 @@ typedef struct {
 } CAN_Filter_t;
 
 /* 接收回调函数指针类型 */
-typedef void (*CAN_RxCallback_t)(const uint8_t *msg, void* arg);
+typedef void (*CAN_RxCallback_t)(const uint8_t *msg, uint32_t id, void* arg);
 
 /* 错误回调函数指针类型 */
 typedef void (*CAN_ErrorCallback_t)(uint32_t error);
@@ -42,6 +42,8 @@ struct CAN_Handle_s {
     uint8_t rxbuf[8];                               /* 接收缓冲区 */
     uint32_t callback_ids[MAX_CAN_FILTERS+1];         /* 回调对应的CAN ID */
     void* callback_args[MAX_CAN_FILTERS+1];        /* 回调对应保存数据位置 */
+    uint32_t callback_idmasks[MAX_CAN_FILTERS+1];     /* 回调对应的ID掩码 */
+    uint32_t callback_ide[MAX_CAN_FILTERS+1];       /* 回调对应的ID类型 */
     uint8_t can_instance;                           /* CAN实例号 (0或1) */
     uint8_t init;                                   /* CAN是否完成初始化*/
 };
@@ -49,9 +51,14 @@ struct CAN_Handle_s {
 /* 函数原型 */
 CAN_Instance_t* BSP_CAN_Init(CAN_HandleTypeDef *hcan);
 
-CAN_Status_t BSP_CAN_RegisterCallback(CAN_Instance_t *can_ins,
+CAN_Status_t BSP_CAN_RegisterStdCallback(CAN_Instance_t *can_ins,
                                      uint32_t can_id,
-                                     uint32_t id_type,
+                                     CAN_RxCallback_t rxCallback,
+                                     void* arg);
+
+CAN_Status_t BSP_CAN_RegisterExtCallback(CAN_Instance_t *can_ins,
+                                     uint32_t can_id,
+                                     uint32_t id_mask,
                                      CAN_RxCallback_t rxCallback,
                                      void* arg);
 

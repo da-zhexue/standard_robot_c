@@ -2,17 +2,17 @@
 
 #include "user_lib.h"
 
-void CBoard_RefereeCallback(const uint8_t* data, void* arg);
+void CBoard_RefereeCallback(const uint8_t* data, uint32_t id, void* arg);
 void CBoard_Gimbal_Init(cboard_gimbal_t* cbord_gimbal_ptr, CAN_HandleTypeDef* hcan)
 {
     if (cbord_gimbal_ptr == NULL || hcan == NULL)
         return;
     memset(cbord_gimbal_ptr, 0, sizeof(cboard_gimbal_t));
     cbord_gimbal_ptr->can_instance = BSP_CAN_Init(hcan);
-    BSP_CAN_RegisterCallback(cbord_gimbal_ptr->can_instance, CMD_ID_REFEREE_GET, CAN_ID_STD, CBoard_RefereeCallback, cbord_gimbal_ptr);
+    BSP_CAN_RegisterStdCallback(cbord_gimbal_ptr->can_instance, CMD_ID_REFEREE_GET, CBoard_RefereeCallback, cbord_gimbal_ptr);
 }
 
-void CBoard_RefereeCallback(const uint8_t* data, void* arg)
+void CBoard_RefereeCallback(const uint8_t* data, uint32_t id, void* arg)
 {
     if (data == NULL || arg == NULL)
         return;

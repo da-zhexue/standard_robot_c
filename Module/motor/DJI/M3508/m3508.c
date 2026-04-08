@@ -1,7 +1,7 @@
 #include "m3508.h"
 #include "user_lib.h"
 
-void get_m3508_measure(const uint8_t* rx_data, void* arg);
+void get_m3508_measure(const uint8_t* rx_data, uint32_t id, void* arg);
 M3508_Status_t m3508_init(m3508_instance* m3508_ins, CAN_HandleTypeDef *hcan, const uint32_t txid, const uint8_t num)
 {
     if (num > M3508_MAXNUM)
@@ -15,12 +15,12 @@ M3508_Status_t m3508_init(m3508_instance* m3508_ins, CAN_HandleTypeDef *hcan, co
         if (txid == M3508_TX_1)
             for (uint8_t i = 0; i < num; i++)
             {
-                BSP_CAN_RegisterCallback(m3508_ins->can_ins, M3508_RX_1+i, CAN_ID_STD, get_m3508_measure, &m3508_ins->ecd[i]);
+                BSP_CAN_RegisterStdCallback(m3508_ins->can_ins, M3508_RX_1+i, get_m3508_measure, &m3508_ins->ecd[i]);
             }
         else
             for (uint8_t i = 0; i < num; i++)
             {
-                BSP_CAN_RegisterCallback(m3508_ins->can_ins, M3508_RX_2+i, CAN_ID_STD, get_m3508_measure, &m3508_ins->ecd[i]);
+                BSP_CAN_RegisterStdCallback(m3508_ins->can_ins, M3508_RX_2+i, get_m3508_measure, &m3508_ins->ecd[i]);
             }
 
         return M3508_OK;
@@ -48,7 +48,7 @@ M3508_Status_t m3508_ctrl(const m3508_instance* m3508_ins, int16_t current[4])
     return M3508_OK;
 }
 
-void get_m3508_measure(const uint8_t* rx_data, void* arg)
+void get_m3508_measure(const uint8_t* rx_data, uint32_t id, void* arg)
 {
     if(rx_data == NULL || arg == NULL)
         return;

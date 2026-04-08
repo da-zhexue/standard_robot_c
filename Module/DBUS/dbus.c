@@ -4,7 +4,7 @@
 static rc_instance* rc_ins_ptr = NULL;
 
 void RemoteDataProcess_UART(uint8_t *data, uint16_t len);
-void RemoteDataProcess_CAN(const uint8_t *data, void* arg);
+void RemoteDataProcess_CAN(const uint8_t *data, uint32_t id, void* arg);
 void dbus_init(rc_instance* rc_ins, const RC_MODE mode, CAN_HandleTypeDef* hcan)
 {
     memset(&rc_ins->rc_data, 0, sizeof(rc_data_t));
@@ -17,7 +17,7 @@ void dbus_init(rc_instance* rc_ins, const RC_MODE mode, CAN_HandleTypeDef* hcan)
     else
     {
         rc_ins->dbus_can = BSP_CAN_Init(hcan);
-        BSP_CAN_RegisterCallback(rc_ins->dbus_can, DBUS_RXID, CAN_ID_STD, RemoteDataProcess_CAN, &rc_ins->rc_data);
+        BSP_CAN_RegisterStdCallback(rc_ins->dbus_can, DBUS_RXID, RemoteDataProcess_CAN, &rc_ins->rc_data);
     }
 
     rc_ins_ptr = rc_ins;
@@ -44,7 +44,7 @@ void RemoteDataProcess_UART(uint8_t *data, const uint16_t len)
 
 }
 
-void RemoteDataProcess_CAN(const uint8_t *data, void* arg)
+void RemoteDataProcess_CAN(const uint8_t *data, uint32_t id, void* arg)
 {
     if (data == NULL || arg == NULL)
     {

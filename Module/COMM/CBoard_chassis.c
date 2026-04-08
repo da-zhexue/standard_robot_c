@@ -2,14 +2,14 @@
 #include "user_lib.h"
 #include <string.h>
 
-void CBoard_IMU_handler(const uint8_t* data, void* arg);
+void CBoard_IMU_handler(const uint8_t* data, uint32_t id, void* arg);
 void CBoard_Chassis_Init(cboard_chassis_t* cbord_chassis_ptr, CAN_HandleTypeDef* can_handle)
 {
     if (cbord_chassis_ptr == NULL || can_handle == NULL)
         return;
     memset(cbord_chassis_ptr, 0, sizeof(cboard_chassis_t));
     cbord_chassis_ptr->can_instance = BSP_CAN_Init(can_handle);
-    BSP_CAN_RegisterCallback(cbord_chassis_ptr->can_instance, CMD_ID_IMU_GET, CAN_ID_EXT, CBoard_IMU_handler, &cbord_chassis_ptr->imu_angle);
+    BSP_CAN_RegisterStdCallback(cbord_chassis_ptr->can_instance, CMD_ID_IMU_GET, CBoard_IMU_handler, &cbord_chassis_ptr->imu_angle);
 }
 
 void CBoard_Referee_Tranmit(const cboard_chassis_t* cbord_chassis_ptr, const uint8_t game_start, const uint8_t camp, const uint8_t attitude, const uint16_t shoot_heat, const uint16_t bullet_allow)
@@ -28,7 +28,7 @@ void CBoard_Referee_Tranmit(const cboard_chassis_t* cbord_chassis_ptr, const uin
     BSP_CAN_Transmit(cbord_chassis_ptr->can_instance, CMD_ID_REFEREE_TRAN, CAN_ID_STD, data, 8);
 }
 
-void CBoard_IMU_handler(const uint8_t* data, void* arg)
+void CBoard_IMU_handler(const uint8_t* data, uint32_t id, void* arg)
 {
     if (data == NULL || arg == NULL)
         return;

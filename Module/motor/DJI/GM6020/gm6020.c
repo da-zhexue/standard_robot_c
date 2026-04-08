@@ -2,7 +2,7 @@
 
 #include "user_lib.h"
 
-void get_gm6020_measure(const uint8_t* rx_data, void* arg);
+void get_gm6020_measure(const uint8_t* rx_data, uint32_t id, void* arg);
 GM6020_Status_t gm6020_init(gm6020_instance* gm6020_ins, CAN_HandleTypeDef *hcan, const uint32_t txid, const uint8_t num)
 {
     if (txid == GM6020_TX_1 || txid == GM6020_TX_2)
@@ -16,7 +16,7 @@ GM6020_Status_t gm6020_init(gm6020_instance* gm6020_ins, CAN_HandleTypeDef *hcan
             if (num > GM6020_MAXNUM_1)
                 return GM6020_ERROR_INVALID_PARAM;
             for (uint8_t i = 0; i < num; i++){
-                BSP_CAN_RegisterCallback(gm6020_ins->can_ins, GM6020_RX_1+i, CAN_ID_STD, get_gm6020_measure, &gm6020_ins->ecd[i]);
+                BSP_CAN_RegisterStdCallback(gm6020_ins->can_ins, GM6020_RX_1+i, get_gm6020_measure, &gm6020_ins->ecd[i]);
             }
         }
         else
@@ -24,7 +24,7 @@ GM6020_Status_t gm6020_init(gm6020_instance* gm6020_ins, CAN_HandleTypeDef *hcan
             if (num > GM6020_MAXNUM_2)
                 return GM6020_ERROR_INVALID_PARAM;
             for (uint8_t i = 0; i < num; i++){
-                BSP_CAN_RegisterCallback(gm6020_ins->can_ins, GM6020_RX_2+i, CAN_ID_STD, get_gm6020_measure, &gm6020_ins->ecd[i]);
+                BSP_CAN_RegisterStdCallback(gm6020_ins->can_ins, GM6020_RX_2+i, get_gm6020_measure, &gm6020_ins->ecd[i]);
             }
         }
         return GM6020_OK;
@@ -70,7 +70,7 @@ GM6020_Status_t gm6020_ctrl_current(const gm6020_instance* gm6020_ins, int16_t c
     return GM6020_OK;
 }
 
-void get_gm6020_measure(const uint8_t* rx_data, void* arg)
+void get_gm6020_measure(const uint8_t* rx_data, uint32_t id, void* arg)
 {
     if(rx_data == NULL || arg == NULL)
         return;

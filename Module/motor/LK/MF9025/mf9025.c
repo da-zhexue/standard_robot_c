@@ -1,14 +1,14 @@
 #include "mf9025.h"
 #include "user_lib.h"
 
-void mf9025_callback(const uint8_t* rx_data, void* arg);
+void mf9025_callback(const uint8_t* rx_data, uint32_t id, void* arg);
 MF9025_Status_t mf9025_init(mf9025_instance* mf9025_ins, CAN_HandleTypeDef *hcan, const uint32_t txid)
 {
     if (txid < MF9025_TX_MIN || txid > MF9025_TX_MAX)
         return MF9025_ERROR_INVALID_PARAM;
     mf9025_ins->can_ins = BSP_CAN_Init(hcan);
     mf9025_ins->txid = txid;
-    BSP_CAN_RegisterCallback(mf9025_ins->can_ins, txid, CAN_ID_STD, mf9025_callback, &mf9025_ins->ecd);
+    BSP_CAN_RegisterStdCallback(mf9025_ins->can_ins, txid, mf9025_callback, &mf9025_ins->ecd);
     return MF9025_OK;
 }
 
@@ -100,7 +100,7 @@ MF9025_Status_t mf9025_get_measure(const mf9025_instance* mf9025_ins)
 }
 
 void get_mf9025_ecd(const uint8_t* rx_data, void* arg);
-void mf9025_callback(const uint8_t* rx_data, void* arg)
+void mf9025_callback(const uint8_t* rx_data, uint32_t id, void* arg)
 {
     if(rx_data == NULL || arg == NULL)
         return;

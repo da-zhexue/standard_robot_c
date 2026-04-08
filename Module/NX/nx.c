@@ -1,16 +1,16 @@
 #include "nx.h"
 
-void NX_CtrlCallback(const uint8_t *data, void *arg);
+void NX_CtrlCallback(const uint8_t *data, uint32_t id, void *arg);
 void NX_Init(nx_ctrl_t *nx_ctrl, CAN_HandleTypeDef *hcan)
 {
     if (nx_ctrl == NULL || hcan == NULL)
         return;
     memset(nx_ctrl, 0, sizeof(nx_ctrl_t));
     nx_ctrl->nx_can = BSP_CAN_Init(hcan);
-    BSP_CAN_RegisterCallback(nx_ctrl->nx_can, CMD_ID_GIMBAL_CTRL, CAN_ID_STD, NX_CtrlCallback, nx_ctrl);
+    BSP_CAN_RegisterStdCallback(nx_ctrl->nx_can, CMD_ID_GIMBAL_CTRL, NX_CtrlCallback, nx_ctrl);
 }
 
-void NX_CtrlCallback(const uint8_t *data, void *arg)
+void NX_CtrlCallback(const uint8_t *data, uint32_t id, void *arg)
 {
     if (data == NULL || arg == NULL)
         return;
