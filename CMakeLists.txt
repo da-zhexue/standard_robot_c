@@ -35,6 +35,8 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME}
         Module/IMU/HI12/hi12.c
         Module/IMU/HI12/hi12.h
+        Module/motor/RS/rs02.c
+        Module/motor/RS/rs02.h
 
 )
 
