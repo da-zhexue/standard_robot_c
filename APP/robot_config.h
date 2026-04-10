@@ -2,20 +2,13 @@
 #ifndef STANDARD_ROBOT_C_ROBOT_CONFIG_H
 #define STANDARD_ROBOT_C_ROBOT_CONFIG_H
 
-#ifndef USE_CBOARD_IMU
+#ifndef MADE_BY_CMAKE
+
 //#define USE_CBOARD_IMU
-#endif
-
-#ifndef CHASSIS
 #define CHASSIS
-#endif
-
-#ifndef GIMBAL
 //#define GIMBAL
-#endif
-
-#ifndef OMNI
 #define OMNI
+
 #endif
 
 #endif //STANDARD_ROBOT_C_ROBOT_CONFIG_H

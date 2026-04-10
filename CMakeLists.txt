@@ -33,11 +33,6 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
-        Module/IMU/HI12/hi12.c
-        Module/IMU/HI12/hi12.h
-        Module/motor/RS/rs02.c
-        Module/motor/RS/rs02.h
-
 )
 
 # Add STM32CubeMX generated sources
@@ -64,6 +59,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Module/motor/DJI/GM6020/gm6020.c
         Module/motor/DJI/M2006/m2006.c
         Module/motor/LK/MF9025/mf9025.c
+        Module/motor/RS/rs02.c
         Module/DBUS/dbus.c
         Module/NUC/nuc.c
         Module/NX/nx.c
@@ -76,6 +72,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Module/IMU/EKF/kalman_filter.c
         Module/IMU/EKF/QuaternionEKF.c
         Module/IMU/INS/ins.c
+        Module/IMU/HI12/hi12.c
         Module/Super_Cap/super_cap.c
         Module/Power_Ctrl/power_ctrl.c
         Module/Power_Ctrl/power_ctrl_param_get.c
@@ -99,7 +96,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
         ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING
-        #CHASSIS
+        MADE_BY_CMAKE
+
+        CHASSIS
         #GIMBAL
         OMNI
 )
