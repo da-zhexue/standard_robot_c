@@ -16,18 +16,22 @@ const float xb[3] = {1, 0, 0};
 const float yb[3] = {0, 1, 0};
 const float zb[3] = {0, 0, 1};
 
-void INS_Init(INS_t *INS)
+void INS_Task(const void *argument);
+osThreadId INStaskHandle;
+
+void INS_Init(INS_t *INS, IMU_Data_t *bmi088)
 {
-    if (INS == NULL)
+    if (INS == NULL || bmi088 == NULL)
         return ;
-    BMI088_Init(&INS->imu);
+    INS->imu = bmi088;
     BSP_PWM_Init(&INS->pwm, &htim10, TIM_CHANNEL_1);
 
-#ifdef USE_CBOARD_IMU
     IMU_QuaternionEKF_Init(10, 0.001f, 10000000, 1, 0);
     PID_plus_Init(&TempCtrl, 2000, 300, 0, 1000, 20, 0, 0, 0, 0, 0, 0, 0);
     INS->ins.AccelLPF = 0.0085f;
-#endif
+    osThreadDef(INStask, INS_Task, osPriorityHigh, 0, 512);
+    INStaskHandle = osThreadCreate(osThread(INStask), INS);
+
 }
 
 void INS_Update(INS_t *ins_ins)
@@ -35,8 +39,8 @@ void INS_Update(INS_t *ins_ins)
     if (ins_ins == NULL)
         return;
     /* === IMU update === */
-    BMI088_Read(&ins_ins->imu);
-#ifdef USE_CBOARD_IMU
+    BMI088_Read(ins_ins->imu);
+
     static uint32_t INS_DWT_Count = 0;
     static float dt = 0, t = 0;
 
@@ -44,12 +48,12 @@ void INS_Update(INS_t *ins_ins)
     dt = DWT_GetDeltaT(&INS_DWT_Count);
     t += dt;
 
-    ins_ins->ins.Accel[X] = ins_ins->imu.Accel[X];
-    ins_ins->ins.Accel[Y] = ins_ins->imu.Accel[Y];
-    ins_ins->ins.Accel[Z] = ins_ins->imu.Accel[Z];
-    ins_ins->ins.Gyro[X]  = ins_ins->imu.Gyro[X];
-    ins_ins->ins.Gyro[Y]  = ins_ins->imu.Gyro[Y];
-    ins_ins->ins.Gyro[Z]  = ins_ins->imu.Gyro[Z];
+    ins_ins->ins.Accel[X] = ins_ins->imu->Accel[X];
+    ins_ins->ins.Accel[Y] = ins_ins->imu->Accel[Y];
+    ins_ins->ins.Accel[Z] = ins_ins->imu->Accel[Z];
+    ins_ins->ins.Gyro[X]  = ins_ins->imu->Gyro[X];
+    ins_ins->ins.Gyro[Y]  = ins_ins->imu->Gyro[Y];
+    ins_ins->ins.Gyro[Z]  = ins_ins->imu->Gyro[Z];
 
     // 核心函数,EKF更新四元数
     IMU_QuaternionEKF_Update(
@@ -84,7 +88,7 @@ void INS_Update(INS_t *ins_ins)
     ins_ins->ins.Pitch          = QEKF_INS->Pitch / 360 * 2 * PI;
     ins_ins->ins.Roll           = QEKF_INS->Roll / 360 * 2 * PI;
     ins_ins->ins.YawTotalAngle  = QEKF_INS->YawTotalAngle / 360 * 2 * PI;
-#endif
+
     /* === temperature control (500Hz) === */
     static uint32_t sys_time_ms = 0;
     static uint32_t last_temp_ctrl_ms = 0;
@@ -93,6 +97,16 @@ void INS_Update(INS_t *ins_ins)
     {
         last_temp_ctrl_ms = sys_time_ms;
         IMU_Temperature_Ctrl(ins_ins);
+    }
+}
+
+void INS_Task(const void *argument)
+{
+    INS_t *ins_ins = (INS_t *)argument;
+    while(1)
+    {
+        osDelay(1);
+        INS_Update(ins_ins);
     }
 }
 
@@ -127,7 +141,7 @@ void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, const float *q)
 
 void IMU_Temperature_Ctrl(const INS_t *ins_ins)
 {
-    PID_plus_Calculate(&TempCtrl, ins_ins->imu.Temperature, RefTemp);
+    PID_plus_Calculate(&TempCtrl, ins_ins->imu->Temperature, RefTemp);
     fp32 temp_out = TempCtrl.Output;
     float_constrain(&temp_out, 0, (fp32)UINT32_MAX * 1.0f);
     BSP_PWM_SetValue(&ins_ins->pwm, (uint16_t)temp_out);

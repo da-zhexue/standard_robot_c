@@ -85,7 +85,7 @@ typedef struct
     rc_instance rc; // 遥控器实例
     m3508_instance m3508; // 3508电机实例
     mf9025_instance mf9025; // 9025电机实例
-    INS_t ins; // 惯性导航系统实例
+    IMU_Data_t bmi088; // BMI088 IMU数据实例
     PowerControllerConfig power_ctrl_config; // 功率控制配置
     PowerAllocationResult power_ctrl_result; // 功率分配结果
     PowerControlParam ctx; // 功率控制参数

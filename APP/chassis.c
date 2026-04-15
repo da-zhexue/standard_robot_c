@@ -47,7 +47,7 @@ void Chassis_Init(chassis_t* chassis_ptr)
     mf9025_speed_init(&chassis_ptr->mf9025, mf9025_speed_pid_config);
     m3508_init(&chassis_ptr->m3508, &hcan1, M3508_TX_1, 4);
     
-    INS_Init(&chassis_ptr->ins);
+    BMI088_Init(&chassis_ptr->bmi088);
     initPowerControllerConfig(&chassis_ptr->power_ctrl_config, M3508_TORQUE_CONST, M3508_CURRENT_LIMIT, M3508_OUTPUT_LIMIT,
         K1_CONST,  K2_CONST, K3_CONST, sentinelMaxPower[0]);
     PowerControl_Init(&chassis_ptr->ctx);
@@ -297,9 +297,9 @@ static void chassis_calc_wheelmotor_speed(chassis_t* chassis_ptr)
  */
 static void chassis_calc_gimbalmotor_angle(chassis_t* chassis_ptr)
 {
-    INS_Update(&chassis_ptr->ins);
+    BMI088_Read(&chassis_ptr->bmi088);
     chassis_ptr->ctrl.m9025_controller.given_angle = chassis_ptr->ctrl.given_gimbal_l_yaw;
-    chassis_ptr->ctrl.m9025_controller.ff_speed = RAD_TO_DEG_FACTOR * chassis_ptr->ins.imu.Gyro[2];
+    chassis_ptr->ctrl.m9025_controller.ff_speed = RAD_TO_DEG_FACTOR * chassis_ptr->bmi088.Gyro[2];
 }
 
 /**

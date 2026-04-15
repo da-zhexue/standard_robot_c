@@ -77,6 +77,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Module/Power_Ctrl/power_ctrl.c
         Module/Power_Ctrl/power_ctrl_param_get.c
         Module/LED/led.c
+        Module/VOFA/vofa.c
         APP/task_init.c
         APP/chassis.c
         APP/gimbal.c
