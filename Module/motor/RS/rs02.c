@@ -26,9 +26,11 @@ RS02_Status_t rs02_init(rs02_instance* rs02_ins, CAN_HandleTypeDef *hcan, const 
     {
         // 主机id默认是0xFD
         // 私有协议用扩展can，所有控制指令都通过写入参数实现，除了运控模式一个控制指令需要发两个can，不知道这sb电机的通信协议是怎么设计的
-        rs02_set_mitctrl_private(rs02_ins); // 依旧先设置模式再使能
+        rs02_set_ctrlmode_private(rs02_ins, mode); // 依旧先设置模式再使能
+        osDelay(1);
         BSP_CAN_RegisterExtCallback(rs02_ins->can_ins, ((RS02_CMD_CALLBACK << 24) | (masterid << 8) | motorid), 0x00FFFFFF, get_rs02_measure_private, &rs02_ins->ecd);
         rs02_enable_private(rs02_ins);
+        osDelay(1);
     }
     return RS02_OK;
 }
@@ -172,10 +174,13 @@ void rs02_setzero_private(const rs02_instance* rs02_ins)
         return;
     if (rs02_ins->protocol != RS02_PROTOCOL_PRIVATE)
         return;
-
+    rs02_disable_private(rs02_ins);
+    osDelay(1);
     const uint32_t txid = ((RS02_CMD_SETZERO << 24) | (rs02_ins->masterid << 8) | rs02_ins->motorid);
     const uint8_t tx_data[8] = {0};
     BSP_CAN_Transmit(rs02_ins->can_ins, txid, CAN_ID_EXT, tx_data, 8);
+    // osDelay(1);
+    // rs02_enable_private(rs02_ins);
 }
 
 void rs02_setparam_private(const rs02_instance* rs02_ins, const uint16_t param_id, const fp32 param_value, const uint8_t param_mode)
@@ -199,14 +204,46 @@ void rs02_setparam_private(const rs02_instance* rs02_ins, const uint16_t param_i
     BSP_CAN_Transmit(rs02_ins->can_ins, txid, CAN_ID_EXT, tx_data, 8);
 }
 
-void rs02_set_mitctrl_private(const rs02_instance* rs02_ins)
+void rs02_set_ctrlmode_private(const rs02_instance* rs02_ins, const uint8_t mode)
 {
     if (rs02_ins == NULL)
         return;
     if (rs02_ins->protocol != RS02_PROTOCOL_PRIVATE)
         return;
 
-    rs02_setparam_private(rs02_ins, 0x7005, RS02_MODE_MIT, Set_mode);
+    rs02_setparam_private(rs02_ins, 0x7005, mode, Set_mode);
+}
+
+void rs02_ctrl_pos_private(const rs02_instance* rs02_ins, const fp32 angle, const fp32 speed)
+{
+    if (rs02_ins == NULL)
+        return;
+    if (rs02_ins->protocol != RS02_PROTOCOL_PRIVATE)
+        return;
+
+    rs02_setparam_private(rs02_ins, 0x7017, speed, Set_parameter);
+    rs02_setparam_private(rs02_ins, 0x7016, angle, Set_parameter);
+}
+
+void rs02_ctrl_3motor_pos_private(const rs02_instance* rs02_ins1, const rs02_instance* rs02_ins2, const rs02_instance* rs02_ins3, const fp32 angle, const fp32 speed)
+{
+    if (rs02_ins1 == NULL || rs02_ins2 == NULL || rs02_ins3 == NULL)
+        return;
+    if (rs02_ins1->protocol != RS02_PROTOCOL_PRIVATE || rs02_ins2->protocol != RS02_PROTOCOL_PRIVATE || rs02_ins3->protocol != RS02_PROTOCOL_PRIVATE)
+        return;
+
+    rs02_setparam_private(rs02_ins1, 0x7017, speed, Set_parameter);
+    osDelay(1);
+    rs02_setparam_private(rs02_ins2, 0x7017, speed, Set_parameter);
+    osDelay(1);
+    rs02_setparam_private(rs02_ins3, 0x7017, speed, Set_parameter);
+    osDelay(1);
+    rs02_setparam_private(rs02_ins1, 0x7016, angle, Set_parameter);
+    osDelay(1);
+    rs02_setparam_private(rs02_ins2, 0x7016, angle, Set_parameter);
+    osDelay(1);
+    rs02_setparam_private(rs02_ins3, 0x7016, angle, Set_parameter);
+    osDelay(1);
 }
 
 void rs02_ctrl_move_private(const rs02_instance* rs02_ins, const fp32 angle, const fp32 speed, const fp32 torch, const fp32 kp, const fp32 kd)
@@ -216,7 +253,7 @@ void rs02_ctrl_move_private(const rs02_instance* rs02_ins, const fp32 angle, con
     if (rs02_ins->protocol != RS02_PROTOCOL_PRIVATE)
         return;
 
-    const uint16_t angle_uint16 = (uint16_t)((angle + RS02_ECD_MAX) * RS02_UINT16_MAX / RS02_ECD_MAX);
+    const uint16_t angle_uint16 = (uint16_t)((angle + RS02_ECD_MAX) * RS02_UINT16_MAX / (2 * RS02_ECD_MAX));
     const uint16_t speed_uint16 = (uint16_t)((speed + RS02_SPEED_MAX) * RS02_UINT16_MAX / (2 * RS02_SPEED_MAX));
     const uint16_t torch_uint16 = (uint16_t)((torch + RS02_TORCH_MAX) * RS02_UINT16_MAX / (2 * RS02_TORCH_MAX));
     const uint16_t kp_uint16 = (int16_t)(kp * RS02_UINT16_MAX / RS02_KP_MAX);

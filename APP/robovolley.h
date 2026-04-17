@@ -10,7 +10,9 @@
 #include "NX/nx.h"
 #include "motor/RS/rs02.h"
 
-#define PITCH_DELTA_MAX (-0.000040f)
+#define PITCH_DELTA_MAX (-0.000001f)
+#define PITCH_MAX (0.1f)
+#define PITCH_MIN (-0.8f)
 #define CHASSIS_MAX_V 2.0f // 底盘最大线速度 m/s
 #define CHASSIS_MAX_W 2.0f // 底盘最大角速度 rad/s
 
@@ -43,7 +45,7 @@ typedef enum
 
 typedef enum
 {
-    SHOOT_SERVE = 0, // 发球
+    SHOOT_SERVE = 3, // 发球
     SHOOT_RECEIVE = 1, // 接球
     SHOOT_STOP = 2 // 停止发接球
 } Shoot_Mode;
@@ -89,6 +91,8 @@ typedef struct
     Shoot_Mode shoot_mode; // 发接球模式
 
     m3508_ctrl_t m3508_controller[3]; // 3个轮毂电机控制数据
+
+    uint8_t rc_offline; // 遥控器离线标志
 
 } ctrl_data_t;
 

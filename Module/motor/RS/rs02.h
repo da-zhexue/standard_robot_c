@@ -5,8 +5,8 @@
 #include "user_lib.h"
 
 // 注意是将uint16_t[0, 65535]映射到[-RS02_ECD_MAX, RS02_ECD_MAX]，而不是[0, RS02_ECD_MAX], speed和torch同理
-#define RS02_UINT16_MAX 65535
-#define RS02_ECD_MAX (4*PI)
+#define RS02_UINT16_MAX 65535.0f
+#define RS02_ECD_MAX (4.0f*PI)
 #define RS02_SPEED_MAX 44.0f
 #define RS02_TORCH_MAX 17.0f
 #define RS02_KP_MAX 500.0f
@@ -19,7 +19,7 @@
 typedef enum
 {
     RS02_MODE_MIT = 0, // MIT模式
-    RS02_MODE_POS = 1, // 位置控制
+    RS02_MODE_POS = 5, // 位置控制
     RS02_MODE_SPEED = 2, // 速度控制
 } RS02_CTRL_MODE;
 
@@ -89,7 +89,9 @@ void rs02_change_protocol_mit(const rs02_instance* rs02_ins, uint8_t protocol);
 void rs02_enable_private(const rs02_instance* rs02_ins);
 void rs02_disable_private(const rs02_instance* rs02_ins);
 void rs02_setzero_private(const rs02_instance* rs02_ins);
-void rs02_set_mitctrl_private(const rs02_instance* rs02_ins);
+void rs02_set_ctrlmode_private(const rs02_instance* rs02_ins, uint8_t mode);
+void rs02_ctrl_pos_private(const rs02_instance* rs02_ins, fp32 angle, fp32 speed);
+void rs02_ctrl_3motor_pos_private(const rs02_instance* rs02_ins1, const rs02_instance* rs02_ins2, const rs02_instance* rs02_ins3, fp32 angle, fp32 speed);
 void rs02_ctrl_move_private(const rs02_instance* rs02_ins, fp32 angle, fp32 speed, fp32 torch, fp32 kp, fp32 kd);
 void rs02_change_protocol_private(const rs02_instance* rs02_ins, uint8_t protocol);
 #endif //STANDARD_ROBOT_C_RS02_H

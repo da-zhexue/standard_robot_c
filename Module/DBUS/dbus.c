@@ -35,13 +35,14 @@ void RemoteDataProcess_UART(uint8_t *data, const uint16_t len)
     rc_data->ch1 = (int16_t)((((int16_t)data[1] >> 3) | ((int16_t)data[2] << 5)) & 0x07FF);
     rc_data->ch2 = (int16_t)((((int16_t)data[2] >> 6) | ((int16_t)data[3] << 2) | ((int16_t)data[4] << 10)) & 0x07FF);
     rc_data->ch3 = (int16_t)((((int16_t)data[4] >> 1) | ((int16_t)data[5] << 7)) & 0x07FF);
+    rc_data->roll = (int16_t)(data[16] | (data[17] << 8));
     rc_data->ch0 -= RC_CH_VALUE_OFFSET;
     rc_data->ch1 -= RC_CH_VALUE_OFFSET;
     rc_data->ch2 -= RC_CH_VALUE_OFFSET;
     rc_data->ch3 -= RC_CH_VALUE_OFFSET;
+    rc_data->roll -= RC_CH_VALUE_OFFSET;
     rc_data->s1 = ((data[5] >> 4) & 0x0003);
     rc_data->s2 = ((data[5] >> 4) & 0x000C) >> 2;
-    rc_data->roll = (int16_t)(data[16] | (data[17] << 8));
     rc_ins_ptr->last_online = DWT_GetTimeline_us();
 }
 
@@ -57,13 +58,14 @@ void RemoteDataProcess_CAN(const uint8_t *data, uint32_t id, void* arg)
     rc_data->ch1 = (int16_t)((((int16_t)data[1] >> 3) | ((int16_t)data[2] << 5)) & 0x07FF);
     rc_data->ch2 = (int16_t)((((int16_t)data[2] >> 6) | ((int16_t)data[3] << 2) | ((int16_t)data[4] << 10)) & 0x07FF);
     rc_data->ch3 = (int16_t)((((int16_t)data[4] >> 1) | ((int16_t)data[5] << 7)) & 0x07FF);
+    rc_data->roll = (int16_t)(data[6] | (data[7] << 8));
     rc_data->ch0 -= RC_CH_VALUE_OFFSET;
     rc_data->ch1 -= RC_CH_VALUE_OFFSET;
     rc_data->ch2 -= RC_CH_VALUE_OFFSET;
     rc_data->ch3 -= RC_CH_VALUE_OFFSET;
+    rc_data->roll -= RC_CH_VALUE_OFFSET;
     rc_data->s1 = ((data[5] >> 4) & 0x0003);
     rc_data->s2 = ((data[5] >> 4) & 0x000C) >> 2;
-    rc_data->roll = (int16_t)(data[6] | (data[7] << 8));
     rc_ins_ptr->last_online = DWT_GetTimeline_us();
 }
 
