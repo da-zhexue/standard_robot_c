@@ -5,20 +5,24 @@
 
 typedef enum
 {
-    CMD_ID_GIMBAL_CTRL = 0x404,
-    CMD_ID_GIMBAL_ANGLE = 0x504,
+    CMD_ID_POS_CTRL = 0x400,
+    CMD_ID_POS_CTRL_FIRE = 0x401,
+    CMD_ID_POS_INFO = 0x501,
+    CMD_ID_PITCH_INFO = 0x502,
 } nx_cmd_id_t;
 
 typedef struct
 {
     CAN_Instance_t* nx_can;
+    fp32 target_x, target_y;
     uint8_t fire;
-    uint8_t scan;
     fp32 target_yaw;
     fp32 target_pitch;
 } nx_ctrl_t;
 
 void NX_Init(nx_ctrl_t *nx_ctrl, CAN_HandleTypeDef *hcan);
-void NX_SendAngle(const nx_ctrl_t *nx_ctrl_ptr,const fp32 q[4]);
+// void NX_SendPos(const nx_ctrl_t *nx_ctrl_ptr, fp32 x, fp32 y, fp32 yaw);
+// void NX_SendPitch(const nx_ctrl_t *nx_ctrl_ptr, fp32 pitch);
+void NX_SendPos(const nx_ctrl_t *nx_ctrl_ptr, fp32 x, fp32 y, fp32 yaw, fp32 pitch);
 
 #endif //STANDARD_ROBOT_C_NX_H

@@ -50,6 +50,7 @@ typedef struct
     rc_data_t rc_data;
     UART_Instance_t dbus_usart;
     CAN_Instance_t* dbus_can;
+    uint64_t last_online;
 } rc_instance;
 
 void dbus_init(rc_instance* rc_ins, RC_MODE mode, CAN_HandleTypeDef* hcan);

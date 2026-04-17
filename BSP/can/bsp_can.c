@@ -48,7 +48,7 @@ CAN_Instance_t* BSP_CAN_Init(CAN_HandleTypeDef *hcan)
     /* 清空回调函数数组 */
     memset(can_ins->rx_callbacks, 0, sizeof(can_ins->rx_callbacks));
     memset(can_ins->callback_ids, 0, sizeof(can_ins->callback_ids));
-    memset(can_ins->callback_idmasks, 0, sizeof(can_ins->callback_idmasks));
+    memset(can_ins->callback_idmasks, 0xFF, sizeof(can_ins->callback_idmasks));
     memset(can_ins->callback_ide, 0, sizeof(can_ins->callback_ide));
 
     /* 配置CAN过滤器 */

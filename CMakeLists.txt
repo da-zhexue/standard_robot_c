@@ -33,6 +33,7 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
+
 )
 
 # Add STM32CubeMX generated sources
@@ -63,6 +64,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Module/DBUS/dbus.c
         Module/NUC/nuc.c
         Module/NX/nx.c
+        Module/Odom/odom.c
         Module/Referee/referee.c
         Module/COMM/comm.c
         Module/COMM/CBoard_chassis.c
@@ -78,8 +80,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Module/Power_Ctrl/power_ctrl_param_get.c
         Module/LED/led.c
         APP/task_init.c
-        APP/chassis.c
-        APP/gimbal.c
+        APP/robovolley.c
         APP/daemon.c
 )
 

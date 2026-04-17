@@ -35,11 +35,11 @@ typedef struct
 typedef struct
 {
     INS_data_t ins;
-    IMU_Data_t imu;
+    IMU_Data_t* imu;
     pwm_instance pwm;
 } INS_t;
 
-void INS_Init(INS_t *INS);
+void INS_Init(INS_t *INS, IMU_Data_t *bmi088);
 void INS_Update(INS_t *ins_ins);
 void IMU_Temperature_Ctrl(const INS_t *ins_ins);
 

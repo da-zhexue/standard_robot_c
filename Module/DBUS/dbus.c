@@ -1,5 +1,6 @@
 #include "dbus.h"
 #include "usart.h"
+#include "dwt/bsp_dwt.h"
 
 static rc_instance* rc_ins_ptr = NULL;
 
@@ -41,7 +42,7 @@ void RemoteDataProcess_UART(uint8_t *data, const uint16_t len)
     rc_data->s1 = ((data[5] >> 4) & 0x0003);
     rc_data->s2 = ((data[5] >> 4) & 0x000C) >> 2;
     rc_data->roll = (int16_t)(data[16] | (data[17] << 8));
-
+    rc_ins_ptr->last_online = DWT_GetTimeline_us();
 }
 
 void RemoteDataProcess_CAN(const uint8_t *data, uint32_t id, void* arg)
@@ -63,5 +64,6 @@ void RemoteDataProcess_CAN(const uint8_t *data, uint32_t id, void* arg)
     rc_data->s1 = ((data[5] >> 4) & 0x0003);
     rc_data->s2 = ((data[5] >> 4) & 0x000C) >> 2;
     rc_data->roll = (int16_t)(data[6] | (data[7] << 8));
+    rc_ins_ptr->last_online = DWT_GetTimeline_us();
 }
 
