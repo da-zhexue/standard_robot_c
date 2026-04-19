@@ -39,8 +39,8 @@ typedef enum
 {
     CHASSIS_RC_OFFLINE = 0, // 遥控器掉线
     CHASSIS_RC = 1, // 遥控器控制
-    CHASSIS_UPC = 2, // 上位机控制
-    CHASSIS_SHUTDOWN = 3 // 关机状态
+    CHASSIS_UPC = 3, // 上位机控制
+    CHASSIS_SHUTDOWN = 2 // 关机状态
 } Robot_Controller;
 
 typedef enum

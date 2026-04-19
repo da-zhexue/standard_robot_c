@@ -28,7 +28,7 @@ RS02_Status_t rs02_init(rs02_instance* rs02_ins, CAN_HandleTypeDef *hcan, const 
         // 私有协议用扩展can，所有控制指令都通过写入参数实现，除了运控模式一个控制指令需要发两个can，不知道这sb电机的通信协议是怎么设计的
         rs02_set_ctrlmode_private(rs02_ins, mode); // 依旧先设置模式再使能
         osDelay(1);
-        BSP_CAN_RegisterExtCallback(rs02_ins->can_ins, ((RS02_CMD_CALLBACK << 24) | (masterid << 8) | motorid), 0x00FFFFFF, get_rs02_measure_private, &rs02_ins->ecd);
+        BSP_CAN_RegisterExtCallback(rs02_ins->can_ins, ((RS02_CMD_CALLBACK << 24) | (motorid << 8) | masterid), 0x1F00FFFF, get_rs02_measure_private, &rs02_ins->ecd);
         rs02_enable_private(rs02_ins);
         osDelay(1);
     }
@@ -156,7 +156,7 @@ void rs02_enable_private(const rs02_instance* rs02_ins)
     BSP_CAN_Transmit(rs02_ins->can_ins, txid, CAN_ID_EXT, tx_data, 8);
 }
 
-void rs02_disable_private(const rs02_instance* rs02_ins)
+void rs02_disable_private(const rs02_instance* rs02_ins, const uint8_t clear_error)
 {
     if (rs02_ins == NULL)
         return;
@@ -164,7 +164,8 @@ void rs02_disable_private(const rs02_instance* rs02_ins)
         return;
 
     const uint32_t txid = ((RS02_CMD_DISABLE << 24) | (rs02_ins->masterid << 8) | rs02_ins->motorid);
-    const uint8_t tx_data[8] = {0};
+    uint8_t tx_data[8] = {0};
+    if (clear_error) tx_data[0] = 0x01;
     BSP_CAN_Transmit(rs02_ins->can_ins, txid, CAN_ID_EXT, tx_data, 8);
 }
 
@@ -174,7 +175,7 @@ void rs02_setzero_private(const rs02_instance* rs02_ins)
         return;
     if (rs02_ins->protocol != RS02_PROTOCOL_PRIVATE)
         return;
-    rs02_disable_private(rs02_ins);
+    rs02_disable_private(rs02_ins, 1);
     osDelay(1);
     const uint32_t txid = ((RS02_CMD_SETZERO << 24) | (rs02_ins->masterid << 8) | rs02_ins->motorid);
     const uint8_t tx_data[8] = {0};
@@ -232,18 +233,26 @@ void rs02_ctrl_3motor_pos_private(const rs02_instance* rs02_ins1, const rs02_ins
     if (rs02_ins1->protocol != RS02_PROTOCOL_PRIVATE || rs02_ins2->protocol != RS02_PROTOCOL_PRIVATE || rs02_ins3->protocol != RS02_PROTOCOL_PRIVATE)
         return;
 
+    if (rs02_ins1->ecd.ecd_offset == 0 || rs02_ins2->ecd.ecd_offset == 0 || rs02_ins3->ecd.ecd_offset == 0)
+        return;
     rs02_setparam_private(rs02_ins1, 0x7017, speed, Set_parameter);
     osDelay(1);
     rs02_setparam_private(rs02_ins2, 0x7017, speed, Set_parameter);
     osDelay(1);
     rs02_setparam_private(rs02_ins3, 0x7017, speed, Set_parameter);
     osDelay(1);
-    rs02_setparam_private(rs02_ins1, 0x7016, angle, Set_parameter);
+    rs02_setparam_private(rs02_ins1, 0x7016, angle + ((fp32)rs02_ins1->ecd.ecd_offset / RS02_UINT16_MAX * 2.0f * RS02_ECD_MAX - RS02_ECD_MAX) - 0.03f, Set_parameter);
     osDelay(1);
-    rs02_setparam_private(rs02_ins2, 0x7016, angle, Set_parameter);
+    rs02_setparam_private(rs02_ins2, 0x7016, angle + ((fp32)rs02_ins2->ecd.ecd_offset / RS02_UINT16_MAX * 2.0f * RS02_ECD_MAX - RS02_ECD_MAX) - 0.03f, Set_parameter);
     osDelay(1);
-    rs02_setparam_private(rs02_ins3, 0x7016, angle, Set_parameter);
+    rs02_setparam_private(rs02_ins3, 0x7016, angle + ((fp32)rs02_ins3->ecd.ecd_offset / RS02_UINT16_MAX * 2.0f * RS02_ECD_MAX - RS02_ECD_MAX) - 0.03f, Set_parameter);
     osDelay(1);
+    // rs02_setparam_private(rs02_ins1, 0x7016, angle, Set_parameter);
+    // osDelay(1);
+    // rs02_setparam_private(rs02_ins2, 0x7016, angle, Set_parameter);
+    // osDelay(1);
+    // rs02_setparam_private(rs02_ins3, 0x7016, angle, Set_parameter);
+    // osDelay(1);
 }
 
 void rs02_ctrl_move_private(const rs02_instance* rs02_ins, const fp32 angle, const fp32 speed, const fp32 torch, const fp32 kp, const fp32 kd)
@@ -286,9 +295,12 @@ void get_rs02_measure_private(const uint8_t* rx_data, uint32_t id, void* arg)
         return;
 
     rs02_ecd_t *ecd = (rs02_ecd_t*)arg;
+    ecd->error = (id >> 16) & 0x3F;
     ecd->ecd = (rx_data[0] << 8) | rx_data[1];
     ecd->speed = (rx_data[2] << 8) | rx_data[3];
     ecd->torch = (rx_data[4] << 8) | rx_data[5];
     ecd->temperature = (rx_data[6] << 8) | rx_data[7];
-}
+    if (ecd->ecd_offset == 0)
+        ecd->ecd_offset = ecd->ecd;
 
+}

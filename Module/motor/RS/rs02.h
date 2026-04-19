@@ -59,11 +59,13 @@ typedef enum
 typedef struct
 {
     uint8_t motorid;
+    uint8_t error;
     uint16_t ecd;
     uint16_t speed;
     uint16_t torch;
     uint16_t temperature;
     uint16_t last_ecd;
+    uint16_t ecd_offset;
 }rs02_ecd_t;
 
 typedef struct
@@ -87,7 +89,7 @@ void rs02_ctrl_pos_mit(const rs02_instance* rs02_ins, fp32 angle, fp32 speed);
 void rs02_ctrl_speed_mit(const rs02_instance* rs02_ins, fp32 speed, fp32 current);
 void rs02_change_protocol_mit(const rs02_instance* rs02_ins, uint8_t protocol);
 void rs02_enable_private(const rs02_instance* rs02_ins);
-void rs02_disable_private(const rs02_instance* rs02_ins);
+void rs02_disable_private(const rs02_instance* rs02_ins, uint8_t clear_error);
 void rs02_setzero_private(const rs02_instance* rs02_ins);
 void rs02_set_ctrlmode_private(const rs02_instance* rs02_ins, uint8_t mode);
 void rs02_ctrl_pos_private(const rs02_instance* rs02_ins, fp32 angle, fp32 speed);

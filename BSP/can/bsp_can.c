@@ -126,7 +126,7 @@ CAN_Status_t BSP_CAN_RegisterExtCallback(CAN_Instance_t *can_ins,
         return CAN_ERROR_INVALID_PARAM;
     }
 
-    if (can_id > 0x1FFFFFF) {
+    if (can_id > 0x1FFFFFFF) {
         return CAN_ERROR_INVALID_PARAM;
     }
 
